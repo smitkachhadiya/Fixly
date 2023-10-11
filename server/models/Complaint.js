@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const ComplaintSchema = new mongoose.Schema({
   customerId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Users',
+    ref: 'User',
     required: true
   },
   bookingId: {
@@ -31,7 +31,7 @@ const ComplaintSchema = new mongoose.Schema({
   },
   resolvedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Users'
+    ref: 'User'
   },
   resolvedDateTime: {
     type: Date

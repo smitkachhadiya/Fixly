@@ -3,25 +3,35 @@ const mongoose = require('mongoose');
 const ReportSchema = new mongoose.Schema({
   adminId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Users',
+    ref: 'User',
     required: true
   },
   reportType: {
     type: String,
-    required: [true, 'Report type is required'],
-    enum: ['Revenue', 'Bookings', 'Providers', 'Customers', 'Complaints']
+    enum: ['Revenue', 'Bookings', 'Providers', 'Customers', 'Complaints', 'Custom'],
+    required: true
+  },
+  generatedAt: {
+    type: Date,
+    default: Date.now
   },
   reportData: {
-    type: mongoose.Schema.Types.Mixed,
+    type: Object,
     required: true
   },
   reportSummary: {
     type: String,
-    required: [true, 'Report summary is required']
+    required: true
   },
   timeFrame: {
-    startDate: Date,
-    endDate: Date
+    startDate: {
+      type: Date,
+      required: true
+    },
+    endDate: {
+      type: Date,
+      required: true
+    }
   },
   totalCommission: {
     type: Number,
@@ -30,10 +40,6 @@ const ReportSchema = new mongoose.Schema({
   totalRevenue: {
     type: Number,
     default: 0
-  },
-  generatedAt: {
-    type: Date,
-    default: Date.now
   }
 }, { timestamps: true });
 

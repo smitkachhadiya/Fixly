@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const SettingsSchema = new mongoose.Schema({
+const settingsSchema = new mongoose.Schema({
   general: {
     siteName: {
       type: String,
@@ -8,18 +8,19 @@ const SettingsSchema = new mongoose.Schema({
     },
     siteDescription: {
       type: String,
-      default: 'Service Marketplace Platform'
-    },
-    logo: {
-      type: String
+      default: ''
     },
     contactEmail: {
       type: String,
-      default: 'support@fixly.com'
+      default: ''
     },
     contactPhone: {
       type: String,
-      default: '+1234567890'
+      default: ''
+    },
+    logo: {
+      type: String,
+      default: ''
     }
   },
   commission: {
@@ -35,8 +36,8 @@ const SettingsSchema = new mongoose.Schema({
     },
     payoutSchedule: {
       type: String,
-      enum: ['Weekly', 'Bi-Weekly', 'Monthly'],
-      default: 'Monthly'
+      enum: ['weekly', 'biweekly', 'monthly'],
+      default: 'monthly'
     }
   },
   notifications: {
@@ -71,15 +72,18 @@ const SettingsSchema = new mongoose.Schema({
       default: false
     }
   }
-}, { timestamps: true });
+}, {
+  timestamps: true
+});
 
-// Static method to get or create settings
-SettingsSchema.statics.getOrCreate = async function() {
+// Ensure there's always one settings document
+settingsSchema.statics.getOrCreate = async function() {
   let settings = await this.findOne();
   if (!settings) {
-    settings = await this.create({});
+    settings = new this();
+    await settings.save();
   }
   return settings;
 };
 
-module.exports = mongoose.model('Settings', SettingsSchema);
+module.exports = mongoose.model('Settings', settingsSchema);

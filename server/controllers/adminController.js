@@ -1,5 +1,5 @@
 const ServiceProvider = require('../models/ServiceProvider');
-const User = require('../models/Users');
+const User = require('../models/User');
 const ServiceListing = require('../models/ServiceListing');
 const Booking = require('../models/Booking');
 const Complaint = require('../models/Complaint');
@@ -113,5 +113,136 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
     ? (completedBookings / totalBookings * 100).toFixed(1)
     : 0;
 
+  // Get payment and revenue data
+  const payments = await Payment.find(dateFilter);
+  const totalRevenue = payments.reduce((sum, payment) => sum + payment.paymentAmount, 0);
+  const avgBookingValue = completedBookings > 0
+    ? (totalRevenue / completedBookings).toFixed(2)
+    : 0;
 
+  // Get commission data
+  const commissions = await Commission.find(dateFilter);
+  const totalCommission = commissions.reduce((sum, commission) => sum + commission.amount, 0);
+
+  // Get complaint statistics
+  const openComplaints = await Complaint.countDocuments({ complaintStatus: 'Open', ...dateFilter });
+
+  // Get review statistics
+  const totalReviews = await Review.countDocuments(dateFilter);
+  const avgRating = await Review.aggregate([
+    { $match: dateFilter },
+    { $group: { _id: null, avgRating: { $avg: '$rating' } } }
+  ]);
+
+  // Get last 7 days booking and revenue data for charts
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }).reverse();
+
+  // Get bookings by day
+  const bookingsByDay = await Promise.all(last7Days.map(async (date) => {
+    const nextDay = new Date(date);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    const count = await Booking.countDocuments({
+      createdAt: { $gte: date, $lt: nextDay }
+    });
+
+    return {
+      label: date.toISOString().split('T')[0].split('-')[2], // Day of month
+      value: count,
+      date: date.toISOString().split('T')[0] // Full date for tooltip
+    };
+  }));
+
+  // Get revenue by day
+  const revenueByDay = await Promise.all(last7Days.map(async (date) => {
+    const nextDay = new Date(date);
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    const dayPayments = await Payment.find({
+      createdAt: { $gte: date, $lt: nextDay }
+    });
+
+    const dayRevenue = dayPayments.reduce((sum, payment) => sum + payment.paymentAmount, 0);
+
+    return {
+      label: date.toISOString().split('T')[0].split('-')[2], // Day of month
+      value: dayRevenue,
+      date: date.toISOString().split('T')[0] // Full date for tooltip
+    };
+  }));
+
+  // Get recent bookings
+  const recentBookings = await Booking.find()
+    .populate({
+      path: 'customerId',
+      select: 'firstName lastName'
+    })
+    .populate({
+      path: 'serviceListingId',
+      select: 'serviceTitle servicePrice'
+    })
+    .sort({ createdAt: -1 })
+    .limit(5);
+
+  // Get recent users
+  const recentUsers = await User.find()
+    .sort({ createdAt: -1 })
+    .limit(5);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      counts: {
+        users: totalUsers,
+        providers: totalProviders,
+        verifiedProviders,
+        pendingProviders,
+        listings: totalListings,
+        bookings: totalBookings,
+        pendingBookings,
+        completedBookings,
+        cancelledBookings,
+        openComplaints,
+        reviews: totalReviews
+      },
+      financial: {
+        totalRevenue,
+        totalCommission,
+        avgBookingValue
+      },
+      performance: {
+        conversionRate,
+        userGrowth,
+        avgRating: avgRating.length > 0 ? avgRating[0].avgRating.toFixed(1) : 0
+      },
+      charts: {
+        bookingsByDay,
+        revenueByDay
+      },
+      recent: {
+        bookings: recentBookings.map(booking => ({
+          id: booking._id,
+          customerName: booking.customerId ? `${booking.customerId.firstName} ${booking.customerId.lastName}` : 'Unknown',
+          serviceTitle: booking.serviceListingId ? booking.serviceListingId.serviceTitle : 'Unknown Service',
+          amount: booking.totalAmount,
+          status: booking.bookingStatus,
+          bookingDate: booking.createdAt
+        })),
+        users: recentUsers.map(user => ({
+          id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          userType: user.userType,
+          profileImage: user.profilePicture,
+          joinDate: user.createdAt
+        }))
+      }
+    }
+  });
 });

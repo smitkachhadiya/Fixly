@@ -5,19 +5,16 @@ const {
   updateProviderProfile,
   getServiceProviders,
   getServiceProviderById,
-  getProviderListings,
   updateProviderLocation,
-  uploadProviderProfileImage
+  getProviderListings
 } = require('../../controllers/serviceProviderController');
 
 const { protect, authorize } = require('../../middleware/auth');
-const { profileImageUpload } = require('../../config/cloudinary');
-const { validateFileType, validateFileSize } = require('../../middleware/fileValidation');
 const { validateProviderRegistration } = require('../../middleware/validateProvider');
 
 const router = express.Router();
 
-// Public routes
+// Public routes with optional auth for admin filtering
 router.get('/', protect, getServiceProviders);
 router.get('/:id', getServiceProviderById);
 
@@ -30,14 +27,6 @@ router.put('/profile', protect, authorize('service_provider'), updateProviderPro
 router.put('/location', protect, authorize('service_provider'), updateProviderLocation);
 router.get('/me/listings', protect, authorize('service_provider'), getProviderListings);
 
-// Profile image upload route
-router.put('/profile/image',
-  protect,
-  authorize('service_provider'),
-  profileImageUpload.single('image'),
-  validateFileType,
-  validateFileSize(2), // 2MB limit for profile images
-  uploadProviderProfileImage
-);
-
 module.exports = router;
+
+

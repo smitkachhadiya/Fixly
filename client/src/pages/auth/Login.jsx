@@ -71,7 +71,6 @@ function Login() {
 
   return (
     <div className="min-h-screen bg-[#ebf2f3]">
-      
 
       <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] px-4 py-12">
         <motion.div

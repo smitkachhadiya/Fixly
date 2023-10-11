@@ -1,6 +1,6 @@
 const ServiceProvider = require('../models/ServiceProvider');
 const ServiceListing = require('../models/ServiceListing');
-const User = require('../models/Users');
+const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const { cloudinary } = require('../config/cloudinary');
 
@@ -18,7 +18,8 @@ exports.registerAsProvider = asyncHandler(async (req, res) => {
     lastName,
     email,
     password,
-    phone
+    phone,
+    profilePicture // Add profile picture field
   } = req.body;
 
   // Validate required fields
@@ -39,15 +40,29 @@ exports.registerAsProvider = asyncHandler(async (req, res) => {
     });
   }
 
-  // Create new user
-  const newUser = await User.create({
+  // Create user data object
+  console.log('Service provider registration with profile picture:', {
+    hasProfilePicture: !!profilePicture,
+    profilePictureUrl: profilePicture
+  });
+
+  const userData = {
     firstName,
     lastName,
     email,
     password,
     phone,
     userType: 'service_provider'
-  });
+  };
+
+  // Only add profilePicture if it's provided
+  if (profilePicture) {
+    userData.profilePicture = profilePicture;
+    console.log('Setting service provider profile picture URL:', profilePicture);
+  }
+
+  // Create new user
+  const newUser = await User.create(userData);
 
   // Create service provider profile
   const serviceProvider = await ServiceProvider.create({
@@ -261,33 +276,6 @@ exports.getServiceProviderById = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Get provider listings
-// @route   GET /api/providers/me/listings
-// @access  Private (service providers only)
-exports.getProviderListings = asyncHandler(async (req, res) => {
-  // Find the service provider profile for the current user
-  const serviceProvider = await ServiceProvider.findOne({ userId: req.user.id });
-
-  if (!serviceProvider) {
-    return res.status(404).json({
-      success: false,
-      message: 'Service provider profile not found'
-    });
-  }
-
-  const listings = await ServiceListing.find({
-    serviceProviderId: serviceProvider._id
-  })
-    .populate('categoryId', 'categoryName')
-    .sort({ createdAt: -1 });
-
-  res.status(200).json({
-    success: true,
-    count: listings.length,
-    data: listings
-  });
-});
-
 // @desc    Update provider location
 // @route   PUT /api/providers/location
 // @access  Private (service providers only)
@@ -323,12 +311,10 @@ exports.updateProviderLocation = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Upload service provider profile image
-// @route   PUT /api/providers/profile/image
-// @access  Private (service providers only)
-exports.uploadProviderProfileImage = asyncHandler(async (req, res) => {
-  const serviceProvider = await ServiceProvider.findOne({ userId: req.user.id })
-    .populate('userId');
+// Make sure getProviderListings is defined and exported
+exports.getProviderListings = asyncHandler(async (req, res) => {
+  // Find the service provider profile for the current user
+  const serviceProvider = await ServiceProvider.findOne({ userId: req.user.id });
 
   if (!serviceProvider) {
     return res.status(404).json({
@@ -337,25 +323,15 @@ exports.uploadProviderProfileImage = asyncHandler(async (req, res) => {
     });
   }
 
-  if (!req.file) {
-    return res.status(400).json({
-      success: false,
-      message: 'Please upload an image'
-    });
-  }
-
-  // Delete the old image from Cloudinary if it exists and it's not the default
-  if (serviceProvider.userId.profilePicture && serviceProvider.userId.profilePicture !== 'default-profile.jpg') {
-    const publicId = serviceProvider.userId.profilePicture.split('/').pop().split('.')[0];
-    await cloudinary.uploader.destroy(`fixly/profiles/${publicId}`);
-  }
-
-  // Update user with new profile image URL
-  serviceProvider.userId.profilePicture = req.file.path;
-  await serviceProvider.userId.save();
+  const listings = await ServiceListing.find({
+    serviceProviderId: serviceProvider._id
+  })
+    .populate('categoryId', 'categoryName')
+    .sort({ createdAt: -1 });
 
   res.status(200).json({
     success: true,
-    data: serviceProvider
+    count: listings.length,
+    data: listings
   });
 });

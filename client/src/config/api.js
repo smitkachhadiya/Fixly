@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Use relative URLs for API calls - works in both development (with proxy) and production (same domain)
-const API_URL = '';
+// Use relative URLs for API calls in development (with proxy) and environment variable in production
+const API_URL = import.meta.env.PROD ? import.meta.env.VITE_BACKEND_URL : '';
 
 // Cache for API responses
 const apiCache = {
@@ -15,6 +15,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 second timeout
 });
 
 // Add a request interceptor to include the auth token in requests
@@ -27,6 +28,37 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add a response interceptor to handle common errors
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    // Handle network errors
+    if (!error.response) {
+      console.error('Network error:', error.message);
+      return Promise.reject(new Error('Network error. Please check your connection.'));
+    }
+    
+    // Handle specific HTTP errors
+    switch (error.response.status) {
+      case 401:
+        // Unauthorized - token might be expired
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
+        window.location.href = '/login';
+        break;
+      case 500:
+        console.error('Server error:', error.response.data);
+        break;
+      default:
+        console.error('API error:', error.response.data);
+    }
+    
     return Promise.reject(error);
   }
 );

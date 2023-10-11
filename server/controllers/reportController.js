@@ -2,9 +2,8 @@ const Report = require('../models/Report');
 const Booking = require('../models/Booking');
 const Payment = require('../models/Payment');
 const Commission = require('../models/Commission');
-const User = require('../models/Users');
+const User = require('../models/User');
 const ServiceProvider = require('../models/ServiceProvider');
-const Complaint = require('../models/Complaint');
 const asyncHandler = require('../utils/asyncHandler');
 
 // @desc    Generate a new report

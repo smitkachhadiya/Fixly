@@ -1,7 +1,7 @@
 const Booking = require('../models/Booking');
 const ServiceListing = require('../models/ServiceListing');
 const ServiceProvider = require('../models/ServiceProvider');
-const User = require('../models/Users');
+const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 
 // @desc    Create a new booking
@@ -266,19 +266,23 @@ exports.getAllBookings = asyncHandler(async (req, res) => {
   const bookings = await Booking.find(query)
     .populate({
       path: 'serviceListingId',
-      select: 'serviceTitle servicePrice'
+      select: 'serviceTitle servicePrice serviceImage categoryId',
+      populate: {
+        path: 'categoryId',
+        select: 'categoryName'
+      }
     })
     .populate({
       path: 'serviceProviderId',
       select: 'userId',
       populate: {
         path: 'userId',
-        select: 'firstName lastName'
+        select: 'firstName lastName profilePicture'
       }
     })
     .populate({
       path: 'customerId',
-      select: 'firstName lastName'
+      select: 'firstName lastName profilePicture'
     })
     .sort({ bookingDateTime: -1 })
     .skip(startIndex)

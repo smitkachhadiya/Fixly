@@ -30,7 +30,7 @@ function ProviderProfile() {
   const navigate = useNavigate();
   const { token, logout } = useAuth();
 
-   useEffect(() => {
+  useEffect(() => {
     const fetchProfile = async () => {
       try {
         setLoading(true);

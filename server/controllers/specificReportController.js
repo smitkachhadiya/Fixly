@@ -1,6 +1,6 @@
 const Booking = require('../models/Booking');
 const Payment = require('../models/Payment');
-const User = require('../models/Users');
+const User = require('../models/User');
 const ServiceProvider = require('../models/ServiceProvider');
 const ServiceCategory = require('../models/ServiceCategory');
 const ServiceListing = require('../models/ServiceListing');

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom"
+import { useNavigate, Link } from "react-router-dom";
 import { uploadToCloudinary } from "../../utils/cloudinary";
 import { motion } from "framer-motion";
 import Button from "../../components/common/Button";
@@ -124,7 +124,6 @@ function SignUp() {
 
   return (
     <div className="min-h-screen bg-[#ebf2f3]">
-      
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         <motion.div

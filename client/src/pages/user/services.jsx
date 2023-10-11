@@ -151,24 +151,55 @@ const Services = () => {
           params.append('limit', limit);
         }
 
-        // Make the API request
+        // Make the API request with timeout
+        console.log('Fetching listings from:', url, 'with params:', params.toString());
+        
+        // Add timeout to catch network issues
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
         const response = await api.get(
-          params.toString() ? `${url}?${params.toString()}` : url
+          params.toString() ? `${url}?${params.toString()}` : url,
+          { signal: controller.signal }
         );
+        
+        clearTimeout(timeoutId);
+        
+        console.log('API Response:', response);
 
         // Handle the response
         const data = response.data;
-        setFilteredListings(data.data || []);
+        if (data && Array.isArray(data.data)) {
+          setFilteredListings(data.data);
+        } else {
+          console.warn('Unexpected data format:', data);
+          setFilteredListings([]);
+        }
 
         // Set pagination info if available
-        if (data.pagination) {
+        if (data && data.pagination) {
           setTotalPages(data.pagination.pages || 1);
         }
 
-        console.log('Fetched listings:', data.data);
+        console.log('Fetched listings:', data?.data);
       } catch (err) {
         console.error('Error fetching listings:', err);
-        setError('Failed to load services. Please try again later.');
+        
+        // Handle different types of errors
+        if (err.code === 'ERR_NETWORK') {
+          setError('Network error. Please check your connection and try again.');
+        } else if (err.code === 'ERR_CANCELED') {
+          setError('Request timeout. Please try again.');
+        } else if (err.response) {
+          // Server responded with error status
+          setError(`Server error: ${err.response.data?.message || 'Failed to load services'}`);
+        } else {
+          // Network or other error
+          setError('Failed to load services. Please try again later.');
+        }
+        
+        // Clear listings on error
+        setFilteredListings([]);
       } finally {
         setLoading(false);
       }
@@ -592,7 +623,6 @@ const Services = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#DEF9C4] to-[#9CDBA6]">
-   
 
       {/* Hero Section with Search */}
       <section className="relative py-20 px-4">

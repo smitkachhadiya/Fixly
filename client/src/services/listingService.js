@@ -16,7 +16,6 @@ export const listingService = {
     return response.data;
   },
 
-  
   updateListing: async (id, listingData) => {
     const response = await api.put(`/api/listings/${id}`, listingData);
     return response.data;
@@ -26,7 +25,6 @@ export const listingService = {
     const response = await api.delete(`/api/listings/${id}`);
     return response.data;
   },
-  
 
   getProviderListings: async (providerId) => {
     const response = await api.get(`/api/listings/provider/${providerId}`);
@@ -37,4 +35,4 @@ export const listingService = {
     const response = await api.get('/api/listings/search', { params: { q: query } });
     return response.data;
   }
-}
+};

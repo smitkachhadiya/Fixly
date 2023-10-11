@@ -6,7 +6,7 @@ import PlaceholderImg from '../../assets/plumbing.png';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 
-function MyBookings() {
+function MyBookings({ hideNavbar = false }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [bookings, setBookings] = useState([]);

@@ -15,7 +15,17 @@ export const authService = {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userData');
   },
- 
+
+  getCurrentUser: async () => {
+    const response = await api.getCurrentUser();
+    return response.data;
+  },
+
+  updateProfile: async (profileData) => {
+    const response = await api.put('/api/auth/updateprofile', profileData);
+    return response.data;
+  },
+
   changePassword: async (passwordData) => {
     const response = await api.put('/api/auth/changepassword', passwordData);
     return response.data;
@@ -26,19 +36,8 @@ export const authService = {
     return response.data;
   },
 
-  updateProfile: async (profileData) => {
-    const response = await api.put('/api/auth/updateprofile', profileData);
-    return response.data;
-  },
-
-  getCurrentUser: async () => {
-    const response = await api.getCurrentUser();
-    return response.data;
-  },
-
   resetPassword: async (token, password) => {
     const response = await api.post('/api/auth/reset-password', { token, password });
     return response.data;
   }
-
-}
+};

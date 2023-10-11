@@ -9,10 +9,9 @@ const paymentRoutes = require('./api/payments');
 const reviewRoutes = require('./api/reviews');
 const complaintRoutes = require('./api/complaints');
 const reportRoutes = require('./api/reports');
+const specificReportRoutes = require('./api/specificReports');
 const commissionRoutes = require('./api/commissions');
 const adminRoutes = require('./api/admin');
-const specificReportRoutes = require('./api/specificReports');
-const settingsRoutes = require('./api/settings');
 
 const router = express.Router();
 
@@ -26,10 +25,10 @@ router.use('/api/bookings', bookingRoutes);
 router.use('/api/payments', paymentRoutes);
 router.use('/api/reviews', reviewRoutes);
 router.use('/api/complaints', complaintRoutes);
+// Register specific report routes BEFORE general report routes
+router.use('/api/reports', specificReportRoutes);
 router.use('/api/reports', reportRoutes);
 router.use('/api/commissions', commissionRoutes);
-router.use('/api/specific-reports', specificReportRoutes);
-router.use('/api/settings', settingsRoutes);
 router.use('/api/admin', adminRoutes);
 
 module.exports = router;

@@ -1,6 +1,3 @@
-const asyncHandler = require('../utils/asyncHandler');
-
-// Validation middleware for service provider registration
 const validateProviderRegistration = (req, res, next) => {
   const { email, password, firstName, lastName, serviceDescription, serviceCategory, availability } = req.body;
   

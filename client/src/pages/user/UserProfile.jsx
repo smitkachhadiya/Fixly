@@ -188,7 +188,7 @@ function UserProfile() {
           <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6 rounded">
             <div className="flex items-center">
               <i className="fas fa-check-circle text-green-500 text-xl mr-3"></i>
-              <p className="text-green-800">{successMessage}</p>
+              <p className="text-green-700">{successMessage}</p>
             </div>
           </div>
         )}

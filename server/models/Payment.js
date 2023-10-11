@@ -4,22 +4,16 @@ const PaymentSchema = new mongoose.Schema({
   bookingId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Booking',
-    required: true,
-    unique: true
+    required: true
   },
   paymentAmount: {
     type: Number,
-    required: [true, 'Payment amount is required'],
-    min: [0, 'Payment amount cannot be negative']
+    required: true
   },
   paymentMethod: {
     type: String,
-    required: [true, 'Payment method is required'],
-    enum: ['Credit Card', 'Debit Card', 'PayPal', 'Bank Transfer', 'Cash']
-  },
-  transactionId: {
-    type: String,
-    unique: true
+    enum: ['Credit Card', 'Debit Card', 'UPI', 'Bank Transfer', 'Cash'],
+    required: true
   },
   paymentDateTime: {
     type: Date,
@@ -30,15 +24,18 @@ const PaymentSchema = new mongoose.Schema({
     enum: ['Pending', 'Completed', 'Failed', 'Refunded'],
     default: 'Pending'
   },
+  transactionId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
   commissionAmount: {
     type: Number,
-    required: true,
-    min: [0, 'Commission amount cannot be negative']
+    required: true
   },
   providerAmount: {
     type: Number,
-    required: true,
-    min: [0, 'Provider amount cannot be negative']
+    required: true
   },
   commissionTransferStatus: {
     type: String,

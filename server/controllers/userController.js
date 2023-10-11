@@ -1,4 +1,4 @@
-const User = require('../models/Users');
+const User = require('../models/User');
 const ServiceProvider = require('../models/ServiceProvider');
 const asyncHandler = require('../utils/asyncHandler');
 

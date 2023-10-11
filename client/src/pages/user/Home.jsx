@@ -150,8 +150,8 @@ const Home = () => {
   };
 
   return (
-   
     <div className="w-full bg-[#ebf2f3] text-[#0b0e11] overflow-x-hidden font-sans">
+
       {/* Hero Section */}
       <div className="w-full min-h-screen text-center overflow-hidden relative bg-[#ebf2f3]">
         <style>
@@ -365,7 +365,7 @@ const Home = () => {
         </div>
       </section>
 
-      
+      <Footer />
     </div>
   );
 };

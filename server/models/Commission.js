@@ -13,14 +13,11 @@ const CommissionSchema = new mongoose.Schema({
   },
   amount: {
     type: Number,
-    required: [true, 'Commission amount is required'],
-    min: [0, 'Commission amount cannot be negative']
+    required: true
   },
   rate: {
     type: Number,
-    required: [true, 'Commission rate is required'],
-    min: [0, 'Commission rate cannot be negative'],
-    max: [100, 'Commission rate cannot exceed 100%']
+    required: true
   },
   paymentId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -28,11 +25,15 @@ const CommissionSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Collected'],
+    enum: ['Pending', 'Collected', 'Refunded'],
     default: 'Pending'
   },
   collectionDate: {
     type: Date
+  },
+  notes: {
+    type: String,
+    maxlength: [500, 'Notes cannot be more than 500 characters']
   }
 }, { timestamps: true });
 
