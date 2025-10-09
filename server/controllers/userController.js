@@ -164,3 +164,41 @@ exports.deleteUser = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Toggle user active status
+// @route   PUT /api/users/:id/status
+// @access  Private (Admin only)
+exports.toggleUserStatus = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: 'User not found'
+    });
+  }
+
+  // If user is an admin and active, check if they're the last active admin
+  if (user.userType === 'admin' && user.isActive) {
+    const activeAdminCount = await User.countDocuments({
+      userType: 'admin',
+      isActive: true
+    });
+
+    if (activeAdminCount <= 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot deactivate the last active admin user'
+      });
+    }
+  }
+
+  // Toggle the status
+  user.isActive = !user.isActive;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: `User ${user.isActive ? 'activated' : 'deactivated'} successfully`,
+    data: user
+  });
+});
