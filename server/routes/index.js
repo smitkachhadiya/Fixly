@@ -15,6 +15,17 @@ const adminRoutes = require('./api/admin');
 const router = express.Router();
 
 // API Routes
-
+router.use('/api/auth', authRoutes);
+router.use('/api/users', userRoutes);
+router.use('/api/providers', providerRoutes);
+router.use('/api/categories', categoryRoutes);
+router.use('/api/listings', listingRoutes);
+router.use('/api/bookings', bookingRoutes);
+router.use('/api/payments', paymentRoutes);
+router.use('/api/reviews', reviewRoutes);
+router.use('/api/complaints', complaintRoutes);
+router.use('/api/reports', reportRoutes);
+router.use('/api/commissions', commissionRoutes);
+router.use('/api/admin', adminRoutes);
 
 module.exports = router;
