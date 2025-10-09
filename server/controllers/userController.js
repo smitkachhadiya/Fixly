@@ -113,3 +113,54 @@ exports.updateUser = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Delete a user
+// @route   DELETE /api/users/:id
+// @access  Private (Admin only)
+exports.deleteUser = asyncHandler(async (req, res) => {
+  // Check if user is an admin and prevent deletion of the last admin
+  const user = await User.findById(req.params.id);
+
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: 'User not found'
+    });
+  }
+
+  // If user is an admin, check if they're the last admin
+  if (user.userType === 'admin') {
+    const adminCount = await User.countDocuments({ userType: 'admin' });
+    if (adminCount <= 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete the last admin user'
+      });
+    }
+  }
+
+  // If user is a service provider, check if they have associated data
+  if (user.userType === 'service_provider') {
+    const provider = await ServiceProvider.findOne({ userId: user._id });
+    if (provider) {
+      // Instead of deleting, mark as inactive
+      user.isActive = false;
+      await user.save();
+
+      return res.status(200).json({
+        success: true,
+        message: 'User has been deactivated instead of deleted due to associated provider data',
+        data: user
+      });
+    }
+  }
+
+  // Delete the user
+  await User.findByIdAndDelete(req.params.id);
+
+  res.status(200).json({
+    success: true,
+    message: 'User deleted successfully',
+    data: {}
+  });
+});
+
