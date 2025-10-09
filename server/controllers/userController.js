@@ -80,3 +80,14 @@ exports.getUserById = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Create a user
+// @route   POST /api/users
+// @access  Private (Admin only)
+exports.createUser = asyncHandler(async (req, res) => {
+  const user = await User.create(req.body);
+  res.status(201).json({
+    success: true,
+    data: user
+  });
+});
+
