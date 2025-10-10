@@ -99,4 +99,19 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
     ? ((newUsers - previousPeriodUsers) / previousPeriodUsers * 100).toFixed(1)
     : 100;
 
+  // Get listing statistics
+  const totalListings = await ServiceListing.countDocuments({ isActive: true, ...dateFilter });
+
+  // Get booking statistics
+  const totalBookings = await Booking.countDocuments(dateFilter);
+  const pendingBookings = await Booking.countDocuments({ bookingStatus: 'Pending', ...dateFilter });
+  const completedBookings = await Booking.countDocuments({ bookingStatus: 'Completed', ...dateFilter });
+  const cancelledBookings = await Booking.countDocuments({ bookingStatus: 'Cancelled', ...dateFilter });
+
+  // Calculate booking conversion rate
+  const conversionRate = totalBookings > 0
+    ? (completedBookings / totalBookings * 100).toFixed(1)
+    : 0;
+
+
 });
