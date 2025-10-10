@@ -48,3 +48,55 @@ exports.updateProviderVerificationStatus = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Get admin dashboard statistics
+// @route   GET /api/admin/dashboard
+// @access  Private (Admin only)
+exports.getDashboardStats = asyncHandler(async (req, res) => {
+  // Get date range from query params
+  const { startDate, endDate } = req.query;
+
+  // Set up date filters
+  let dateFilter = {};
+  if (startDate && endDate) {
+    dateFilter = {
+      createdAt: {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      }
+    };
+  } else if (startDate) {
+    dateFilter = {
+      createdAt: { $gte: new Date(startDate) }
+    };
+  } else if (endDate) {
+    dateFilter = {
+      createdAt: { $lte: new Date(endDate) }
+    };
+  }
+
+  // Get user counts
+  const totalUsers = await User.countDocuments({ userType: 'user', ...dateFilter });
+  const totalProviders = await ServiceProvider.countDocuments(dateFilter);
+  const verifiedProviders = await ServiceProvider.countDocuments({ verificationStatus: 'Verified', ...dateFilter });
+  const pendingProviders = await ServiceProvider.countDocuments({ verificationStatus: 'Pending', ...dateFilter });
+
+  // Get new users in the last 30 days
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const newUsers = await User.countDocuments({
+    userType: 'user',
+    createdAt: { $gte: thirtyDaysAgo }
+  });
+
+  // Calculate user growth percentage
+  const sixtyDaysAgo = new Date();
+  sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+  const previousPeriodUsers = await User.countDocuments({
+    userType: 'user',
+    createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo }
+  });
+  const userGrowth = previousPeriodUsers > 0
+    ? ((newUsers - previousPeriodUsers) / previousPeriodUsers * 100).toFixed(1)
+    : 100;
+
+});
