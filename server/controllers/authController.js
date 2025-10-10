@@ -185,3 +185,34 @@ exports.updateProfile = asyncHandler(async (req, res) => {
     });
   }
 });
+
+// @desc    Update password
+// @route   PUT /api/auth/updatepassword
+// @access  Private
+// Update password function
+exports.updatePassword = asyncHandler(async (req, res) => {
+  // Make sure to include the password field with .select('+password')
+  const user = await User.findById(req.user.id).select('+password');
+
+  // Check if user exists and has a password field
+  if (!user || !user.password) {
+    return res.status(400).json({
+      success: false,
+      message: 'User not found or password field is missing'
+    });
+  }
+
+  // Check current password
+  if (!(await user.matchPassword(req.body.currentPassword))) {
+    return res.status(401).json({
+      success: false,
+      message: 'Password is incorrect'
+    });
+  }
+
+  user.password = req.body.newPassword;
+  await user.save();
+
+  sendTokenResponse(user, 200, res);
+});
+
