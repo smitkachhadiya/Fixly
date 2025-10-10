@@ -93,3 +93,110 @@ exports.getEarningsById = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Get earnings summary
+// @route   GET /api/admin/earnings/summary
+// @access  Private (Admin only)
+exports.getEarningsSummary = asyncHandler(async (req, res) => {
+  // Get date range
+  const { period } = req.query;
+  let startDate, endDate;
+  const now = new Date();
+  
+  switch (period) {
+    case 'week':
+      // Last 7 days
+      startDate = new Date(now);
+      startDate.setDate(now.getDate() - 7);
+      endDate = now;
+      break;
+    case 'month':
+      // Last 30 days
+      startDate = new Date(now);
+      startDate.setDate(now.getDate() - 30);
+      endDate = now;
+      break;
+    case 'year':
+      // Last 365 days
+      startDate = new Date(now);
+      startDate.setDate(now.getDate() - 365);
+      endDate = now;
+      break;
+    default:
+      // Default to last 30 days
+      startDate = new Date(now);
+      startDate.setDate(now.getDate() - 30);
+      endDate = now;
+  }
+  
+  // Get earnings in date range
+  const earnings = await AdminEarnings.find({
+    date: { $gte: startDate, $lte: endDate }
+  }).sort({ date: 1 });
+  
+  // Calculate totals
+  const totalEarnings = earnings.reduce((sum, earning) => sum + earning.totalCommissionEarned, 0);
+  const totalBookings = earnings.reduce((sum, earning) => sum + earning.totalBookings, 0);
+  
+  // Group by day/week/month for chart data
+  let chartData = [];
+  
+  if (period === 'week') {
+    // Group by day
+    earnings.forEach(earning => {
+      chartData.push({
+        date: earning.date.toISOString().split('T')[0],
+        earnings: earning.totalCommissionEarned,
+        bookings: earning.totalBookings
+      });
+    });
+  } else if (period === 'month') {
+    // Group by day
+    earnings.forEach(earning => {
+      chartData.push({
+        date: earning.date.toISOString().split('T')[0],
+        earnings: earning.totalCommissionEarned,
+        bookings: earning.totalBookings
+      });
+    });
+  } else {
+    // Group by month
+    const monthlyData = {};
+    
+    earnings.forEach(earning => {
+      const monthYear = earning.date.toISOString().substring(0, 7); // YYYY-MM
+      
+      if (!monthlyData[monthYear]) {
+        monthlyData[monthYear] = {
+          earnings: 0,
+          bookings: 0
+        };
+      }
+      
+      monthlyData[monthYear].earnings += earning.totalCommissionEarned;
+      monthlyData[monthYear].bookings += earning.totalBookings;
+    });
+    
+    // Convert to array
+    for (const [monthYear, data] of Object.entries(monthlyData)) {
+      chartData.push({
+        date: monthYear,
+        earnings: data.earnings,
+        bookings: data.bookings
+      });
+    }
+    
+    // Sort by date
+    chartData.sort((a, b) => a.date.localeCompare(b.date));
+  }
+  
+  res.status(200).json({
+    success: true,
+    summary: {
+      period,
+      totalEarnings,
+      totalBookings,
+      averageDailyEarnings: totalEarnings / earnings.length || 0
+    },
+    chartData
+  });
+});
