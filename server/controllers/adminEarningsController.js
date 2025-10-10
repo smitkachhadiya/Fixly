@@ -47,3 +47,49 @@ exports.getAllEarnings = asyncHandler(async (req, res) => {
     data: earnings
   });
 });
+
+// @desc    Get earnings by ID
+// @route   GET /api/admin/earnings/:id
+// @access  Private (Admin only)
+exports.getEarningsById = asyncHandler(async (req, res) => {
+  const earnings = await AdminEarnings.findById(req.params.id)
+    .populate({
+      path: 'commissions',
+      populate: [
+        {
+          path: 'bookingId',
+          populate: [
+            {
+              path: 'serviceListingId',
+              select: 'serviceTitle'
+            },
+            {
+              path: 'customerId',
+              select: 'firstName lastName'
+            }
+          ]
+        },
+        {
+          path: 'serviceProviderId',
+          select: 'userId',
+          populate: {
+            path: 'userId',
+            select: 'firstName lastName'
+          }
+        }
+      ]
+    });
+  
+  if (!earnings) {
+    return res.status(404).json({
+      success: false,
+      message: 'Earnings record not found'
+    });
+  }
+  
+  res.status(200).json({
+    success: true,
+    data: earnings
+  });
+});
+
