@@ -216,3 +216,54 @@ exports.updatePassword = asyncHandler(async (req, res) => {
   sendTokenResponse(user, 200, res);
 });
 
+// @desc    Forgot password
+// @route   POST /api/auth/forgotpassword
+// @access  Public
+exports.forgotPassword = asyncHandler(async (req, res) => {
+  console.log('Forgot password request received for email:', req.body.email);
+
+  const user = await User.findOne({ email: req.body.email });
+
+  if (!user) {
+    console.log('No user found with email:', req.body.email);
+    return res.status(404).json({
+      success: false,
+      message: 'There is no user with that email'
+    });
+  }
+
+  console.log('User found, generating reset token');
+
+  // Get reset token
+  const resetToken = user.getResetPasswordToken();
+  console.log('Generated reset token:', resetToken);
+
+  await user.save({ validateBeforeSave: false });
+
+  // Create reset url - point to frontend instead of API
+  const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+
+  const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please click on the following link to reset your password: \n\n ${resetUrl}`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: 'Password reset token',
+      message
+    });
+
+    res.status(200).json({ success: true, data: 'Email sent' });
+  } catch (err) {
+    console.log(err);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save({ validateBeforeSave: false });
+
+    return res.status(500).json({
+      success: false,
+      message: 'Email could not be sent'
+    });
+  }
+});
+
