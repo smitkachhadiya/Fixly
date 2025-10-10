@@ -329,3 +329,15 @@ const sendTokenResponse = (user, statusCode, res) => {
     });
 };
 
+// @desc    Get all users
+// @route   GET /api/users
+// @access  Private (Admin only)
+exports.getUsers = asyncHandler(async (req, res) => {
+  const users = await User.find().select('-password');
+  res.status(200).json({
+    success: true,
+    count: users.length,
+    data: users
+  });
+});
+
