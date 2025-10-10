@@ -200,3 +200,28 @@ exports.getEarningsSummary = asyncHandler(async (req, res) => {
     chartData
   });
 });
+
+// @desc    Update earnings notes
+// @route   PUT /api/admin/earnings/:id
+// @access  Private (Admin only)
+exports.updateEarnings = asyncHandler(async (req, res) => {
+  const { notes } = req.body;
+  
+  const earnings = await AdminEarnings.findById(req.params.id);
+  
+  if (!earnings) {
+    return res.status(404).json({
+      success: false,
+      message: 'Earnings record not found'
+    });
+  }
+  
+  if (notes) earnings.notes = notes;
+  
+  await earnings.save();
+  
+  res.status(200).json({
+    success: true,
+    data: earnings
+  });
+});
