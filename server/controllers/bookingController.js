@@ -1,5 +1,6 @@
 const Booking = require('../models/Booking');
 const ServiceListing = require('../models/ServiceListing');
+const ServiceProvider = require('../models/ServiceProvider');
 const asyncHandler = require('../utils/asyncHandler');
 
 // @desc    Create a new booking
@@ -83,6 +84,38 @@ exports.getCustomerBookings = asyncHandler(async (req, res) => {
   console.log('Found bookings:', bookings.length);
   
   // Mongoose find() returns an empty array if no bookings found, so no need for explicit check
+  
+  res.status(200).json({
+    success: true,
+    count: bookings.length,
+    data: bookings
+  });
+});
+
+// @desc    Get all bookings for a service provider
+// @route   GET /api/bookings/provider
+// @access  Private (Service Provider only)
+exports.getProviderBookings = asyncHandler(async (req, res) => {
+  // Find the service provider profile for the current user
+  const serviceProvider = await ServiceProvider.findOne({ userId: req.user.id });
+  
+  if (!serviceProvider) {
+    return res.status(404).json({
+      success: false,
+      message: 'Service provider profile not found'
+    });
+  }
+  
+  const bookings = await Booking.find({ serviceProviderId: serviceProvider._id })
+    .populate({
+      path: 'serviceListingId',
+      select: 'serviceTitle servicePrice serviceImage'
+    })
+    .populate({
+      path: 'customerId',
+      select: 'firstName lastName profilePicture'
+    })
+    .sort({ bookingDateTime: -1 });
   
   res.status(200).json({
     success: true,
