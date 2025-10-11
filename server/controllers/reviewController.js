@@ -67,3 +67,39 @@ exports.createReview = asyncHandler(async (req, res) => {
     data: review
   });
 });
+
+// @desc    Get reviews for a service provider
+// @route   GET /api/reviews/provider/:providerId
+// @access  Public
+exports.getProviderReviews = asyncHandler(async (req, res) => {
+  const providerId = req.params.providerId;
+  
+  // Find bookings for this provider
+  const bookings = await Booking.find({ 
+    serviceProviderId: providerId,
+    bookingStatus: 'Completed'
+  });
+  
+  const bookingIds = bookings.map(booking => booking._id);
+  
+  // Find reviews for these bookings
+  const reviews = await Review.find({ bookingId: { $in: bookingIds } })
+    .populate({
+      path: 'customerId',
+      select: 'firstName lastName profilePicture'
+    })
+    .populate({
+      path: 'bookingId',
+      populate: {
+        path: 'serviceListingId',
+        select: 'serviceTitle'
+      }
+    })
+    .sort({ reviewDateTime: -1 });
+  
+  res.status(200).json({
+    success: true,
+    count: reviews.length,
+    data: reviews
+  });
+});
