@@ -175,3 +175,38 @@ exports.getReviewById = asyncHandler(async (req, res) => {
     data: review
   });
 });
+
+// @desc    Update a review
+// @route   PUT /api/reviews/:id
+// @access  Private (Customer only)
+exports.updateReview = asyncHandler(async (req, res) => {
+  const { rating, reviewText } = req.body;
+  
+  let review = await Review.findById(req.params.id);
+  
+  if (!review) {
+    return res.status(404).json({
+      success: false,
+      message: 'Review not found'
+    });
+  }
+  
+  // Check if the review belongs to the customer
+  if (review.customerId.toString() !== req.user.id) {
+    return res.status(403).json({
+      success: false,
+      message: 'Not authorized to update this review'
+    });
+  }
+  
+  // Update review
+  if (rating) review.rating = rating;
+  if (reviewText) review.reviewText = reviewText;
+  
+  await review.save();
+  
+  res.status(200).json({
+    success: true,
+    data: review
+  });
+});

@@ -1,5 +1,5 @@
 const express = require('express');
-const { createReview, getProviderReviews, getListingReviews, getReviewById } = require('../../controllers/reviewController');
+const { createReview, getProviderReviews, getListingReviews, getReviewById, updateReview } = require('../../controllers/reviewController');
 const { protect, authorize } = require('../../middleware/auth');
 
 const router = express.Router();
@@ -11,5 +11,6 @@ router.get('/:id', getReviewById);
 
 // Protected routes
 router.post('/', protect, authorize('customer'), createReview);
+router.put('/:id', protect, authorize('customer'), updateReview);
 
 module.exports = router;
