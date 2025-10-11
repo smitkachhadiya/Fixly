@@ -142,6 +142,34 @@ exports.getListings = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Get service listing by ID
+// @route   GET /api/listings/:id
+// @access  Public
+exports.getListingById = asyncHandler(async (req, res) => {
+  const listing = await ServiceListing.findById(req.params.id)
+    .populate({
+      path: 'serviceProviderId',
+      select: 'rating',
+      populate: {
+        path: 'userId',
+        select: 'firstName lastName profilePicture'
+      }
+    })
+    .populate('categoryId', 'categoryName categoryDescription');
+
+  if (!listing) {
+    return res.status(404).json({
+      success: false,
+      message: 'Service listing not found'
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    data: listing
+  });
+});
+
 // @desc    Upload service listing image
 // @route   PUT /api/listings/:id/image
 // @access  Private (Service provider who owns the listing)
