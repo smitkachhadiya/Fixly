@@ -62,6 +62,86 @@ exports.createListing = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Get all service listings (with filtering)
+// @route   GET /api/listings
+// @access  Public
+exports.getListings = asyncHandler(async (req, res) => {
+  let query = { isActive: true };
+
+  // Filter by category if provided
+  if (req.query.category) {
+    query.categoryId = req.query.category;
+  }
+
+  // Filter by provider if provided
+  if (req.query.provider) {
+    query.serviceProviderId = req.query.provider;
+  }
+
+  // Filter by price range if provided
+  if (req.query.minPrice || req.query.maxPrice) {
+    query.servicePrice = {};
+    if (req.query.minPrice) query.servicePrice.$gte = parseFloat(req.query.minPrice);
+    if (req.query.maxPrice) query.servicePrice.$lte = parseFloat(req.query.maxPrice);
+  }
+
+  // Filter by tags if provided
+  if (req.query.tags) {
+    const tagList = req.query.tags.split(',').map(tag => tag.trim());
+    query.tags = { $in: tagList };
+  }
+
+  // Search by title or details
+  if (req.query.search) {
+    const searchRegex = new RegExp(req.query.search, 'i');
+    query.$or = [
+      { serviceTitle: searchRegex },
+      { serviceDetails: searchRegex }
+    ];
+  }
+
+  // Pagination
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
+  const startIndex = (page - 1) * limit;
+
+  // Sorting
+  let sort = {};
+  if (req.query.sort) {
+    if (req.query.sort === 'price-asc') {
+      sort = { servicePrice: 1 };
+    } else if (req.query.sort === 'price-desc') {
+      sort = { servicePrice: -1 };
+    } else if (req.query.sort === 'rating') {
+      sort = { averageRating: -1 };
+    } else if (req.query.sort === 'newest') {
+      sort = { createdAt: -1 };
+    }
+  } else {
+    sort = { createdAt: -1 }; // Default sort by newest
+  }
+
+  const listings = await ServiceListing.find(query)
+    .populate('serviceProviderId', 'rating')
+    .populate('categoryId', 'categoryName')
+    .sort(sort)
+    .skip(startIndex)
+    .limit(limit);
+
+  const total = await ServiceListing.countDocuments(query);
+
+  res.status(200).json({
+    success: true,
+    count: listings.length,
+    pagination: {
+      total,
+      page,
+      pages: Math.ceil(total / limit)
+    },
+    data: listings
+  });
+});
+
 // @desc    Upload service listing image
 // @route   PUT /api/listings/:id/image
 // @access  Private (Service provider who owns the listing)

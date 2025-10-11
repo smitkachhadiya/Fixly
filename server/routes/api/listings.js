@@ -1,6 +1,7 @@
 const express = require('express');
 const {
   createListing,
+  getListings,
   uploadListingImage,
   deleteListingImage
 } = require('../../controllers/serviceListingController');
@@ -10,6 +11,9 @@ const { serviceImageUpload } = require('../../config/cloudinary');
 const { validateFileType, validateFileSize } = require('../../middleware/fileValidation');
 
 const router = express.Router();
+
+// Public routes
+router.get('/', getListings);
 
 // Service provider routes
 router.post(
