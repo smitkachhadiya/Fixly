@@ -302,6 +302,33 @@ exports.updateListingStatus = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Get provider's own listings
+// @route   GET /api/listings/provider
+// @access  Private (Service providers only)
+exports.getProviderListings = asyncHandler(async (req, res) => {
+  // Find the service provider profile for the current user
+  const serviceProvider = await ServiceProvider.findOne({ userId: req.user.id });
+
+  if (!serviceProvider) {
+    return res.status(404).json({
+      success: false,
+      message: 'Service provider profile not found'
+    });
+  }
+
+  const listings = await ServiceListing.find({
+    serviceProviderId: serviceProvider._id
+  })
+    .populate('categoryId', 'categoryName')
+    .sort({ createdAt: -1 });
+
+  res.status(200).json({
+    success: true,
+    count: listings.length,
+    data: listings
+  });
+});
+
 // @desc    Upload service listing image
 // @route   PUT /api/listings/:id/image
 // @access  Private (Service provider who owns the listing)

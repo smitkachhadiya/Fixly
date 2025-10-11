@@ -6,6 +6,7 @@ const {
   updateListing,
   deleteListing,
   updateListingStatus,
+  getProviderListings,
   uploadListingImage,
   deleteListingImage
 } = require('../../controllers/serviceListingController');
@@ -51,6 +52,9 @@ router.put(
   authorize('service_provider'),
   updateListingStatus
 );
+
+// Get provider's own listings
+router.get('/provider', protect, authorize('service_provider'), getProviderListings);
 
 // Service provider routes for image management
 router.put(
