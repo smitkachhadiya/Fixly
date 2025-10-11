@@ -103,3 +103,35 @@ exports.getProviderReviews = asyncHandler(async (req, res) => {
     data: reviews
   });
 });
+
+// @desc    Get reviews for a service listing
+// @route   GET /api/reviews/listing/:listingId
+// @access  Public
+exports.getListingReviews = asyncHandler(async (req, res) => {
+  const listingId = req.params.listingId;
+  
+  // Find bookings for this listing
+  const bookings = await Booking.find({ 
+    serviceListingId: listingId,
+    bookingStatus: 'Completed'
+  });
+  
+  const bookingIds = bookings.map(booking => booking._id);
+  
+  // Find reviews for these bookings
+  const reviews = await Review.find({ bookingId: { $in: bookingIds } })
+    .populate({
+      path: 'customerId',
+      select: 'firstName lastName profilePicture'
+    })
+    .populate({
+      path: 'bookingId'
+    })
+    .sort({ reviewDateTime: -1 });
+  
+  res.status(200).json({
+    success: true,
+    count: reviews.length,
+    data: reviews
+  });
+});
