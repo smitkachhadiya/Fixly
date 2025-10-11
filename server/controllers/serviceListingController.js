@@ -266,6 +266,42 @@ exports.deleteListing = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Update listing status
+// @route   PUT /api/listings/:id/status
+// @access  Private (Service provider who owns the listing)
+exports.updateListingStatus = asyncHandler(async (req, res) => {
+  const { isActive } = req.body;
+
+  const listing = await ServiceListing.findById(req.params.id);
+
+  if (!listing) {
+    return res.status(404).json({
+      success: false,
+      message: 'Service listing not found'
+    });
+  }
+
+  // Find the service provider profile for the current user
+  const serviceProvider = await ServiceProvider.findOne({ userId: req.user.id });
+
+  // Check if the listing belongs to the provider
+  if (!serviceProvider || listing.serviceProviderId.toString() !== serviceProvider._id.toString()) {
+    return res.status(403).json({
+      success: false,
+      message: 'You are not authorized to update this listing'
+    });
+  }
+
+  // Update the listing status
+  listing.isActive = isActive;
+  await listing.save();
+
+  res.status(200).json({
+    success: true,
+    data: listing
+  });
+});
+
 // @desc    Upload service listing image
 // @route   PUT /api/listings/:id/image
 // @access  Private (Service provider who owns the listing)

@@ -5,6 +5,7 @@ const {
   getListingById,
   updateListing,
   deleteListing,
+  updateListingStatus,
   uploadListingImage,
   deleteListingImage
 } = require('../../controllers/serviceListingController');
@@ -42,6 +43,13 @@ router.delete(
   protect,
   authorize('service_provider'),
   deleteListing
+);
+
+router.put(
+  '/:id/status',
+  protect,
+  authorize('service_provider'),
+  updateListingStatus
 );
 
 // Service provider routes for image management
