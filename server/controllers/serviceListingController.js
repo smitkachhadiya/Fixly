@@ -228,6 +228,44 @@ exports.updateListing = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Delete service listing
+// @route   DELETE /api/listings/:id
+// @access  Private (Service provider who owns the listing)
+exports.deleteListing = asyncHandler(async (req, res) => {
+  const listing = await ServiceListing.findById(req.params.id);
+
+  if (!listing) {
+    return res.status(404).json({
+      success: false,
+      message: 'Service listing not found'
+    });
+  }
+
+  // Find the service provider profile for the current user
+  const serviceProvider = await ServiceProvider.findOne({ userId: req.user.id });
+
+  // Check if the listing belongs to the provider
+  if (!serviceProvider || listing.serviceProviderId.toString() !== serviceProvider._id.toString()) {
+    return res.status(403).json({
+      success: false,
+      message: 'You are not authorized to delete this listing'
+    });
+  }
+
+  // Delete the image from Cloudinary if it exists
+  if (listing.serviceImage) {
+    const publicId = listing.serviceImage.split('/').pop().split('.')[0];
+    await cloudinary.uploader.destroy(`fixly/services/${publicId}`);
+  }
+
+  await listing.remove();
+
+  res.status(200).json({
+    success: true,
+    message: 'Service listing deleted successfully'
+  });
+});
+
 // @desc    Upload service listing image
 // @route   PUT /api/listings/:id/image
 // @access  Private (Service provider who owns the listing)
