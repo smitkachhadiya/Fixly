@@ -135,3 +135,43 @@ exports.getListingReviews = asyncHandler(async (req, res) => {
     data: reviews
   });
 });
+
+// @desc    Get review by ID
+// @route   GET /api/reviews/:id
+// @access  Public
+exports.getReviewById = asyncHandler(async (req, res) => {
+  const review = await Review.findById(req.params.id)
+    .populate({
+      path: 'customerId',
+      select: 'firstName lastName profilePicture'
+    })
+    .populate({
+      path: 'bookingId',
+      populate: [
+        {
+          path: 'serviceListingId',
+          select: 'serviceTitle'
+        },
+        {
+          path: 'serviceProviderId',
+          select: 'userId',
+          populate: {
+            path: 'userId',
+            select: 'firstName lastName'
+          }
+        }
+      ]
+    });
+  
+  if (!review) {
+    return res.status(404).json({
+      success: false,
+      message: 'Review not found'
+    });
+  }
+  
+  res.status(200).json({
+    success: true,
+    data: review
+  });
+});
