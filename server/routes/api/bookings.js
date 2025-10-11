@@ -1,5 +1,5 @@
 const express = require('express');
-const { createBooking, getCustomerBookings, getProviderBookings, getBookingById, updateBookingStatus } = require('../../controllers/bookingController');
+const { createBooking, getCustomerBookings, getProviderBookings, getBookingById, updateBookingStatus, getAllBookings } = require('../../controllers/bookingController');
 const { protect, authorize } = require('../../middleware/auth');
 
 const router = express.Router();
@@ -18,5 +18,8 @@ router.get('/:id', protect, authorize('user', 'service_provider', 'admin'), getB
 
 // Update booking status route
 router.put('/:id/status', protect, authorize('user', 'service_provider', 'admin'), updateBookingStatus);
+
+// Get all bookings (admin)
+router.get('/', protect, authorize('admin'), getAllBookings);
 
 module.exports = router;

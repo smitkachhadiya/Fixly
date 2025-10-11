@@ -239,3 +239,61 @@ exports.updateBookingStatus = asyncHandler(async (req, res) => {
     data: booking
   });
 });
+
+// @desc    Get all bookings (admin)
+// @route   GET /api/bookings
+// @access  Private (Admin only)
+exports.getAllBookings = asyncHandler(async (req, res) => {
+  // Pagination
+  const page = parseInt(req.query.page, 10) || 1;
+  const limit = parseInt(req.query.limit, 10) || 10;
+  const startIndex = (page - 1) * limit;
+  
+  // Filtering
+  let query = {};
+  
+  if (req.query.status) {
+    query.bookingStatus = req.query.status;
+  }
+  
+  if (req.query.from && req.query.to) {
+    query.serviceDateTime = {
+      $gte: new Date(req.query.from),
+      $lte: new Date(req.query.to)
+    };
+  }
+  
+  const bookings = await Booking.find(query)
+    .populate({
+      path: 'serviceListingId',
+      select: 'serviceTitle servicePrice'
+    })
+    .populate({
+      path: 'serviceProviderId',
+      select: 'userId',
+      populate: {
+        path: 'userId',
+        select: 'firstName lastName'
+      }
+    })
+    .populate({
+      path: 'customerId',
+      select: 'firstName lastName'
+    })
+    .sort({ bookingDateTime: -1 })
+    .skip(startIndex)
+    .limit(limit);
+  
+  const total = await Booking.countDocuments(query);
+  
+  res.status(200).json({
+    success: true,
+    count: bookings.length,
+    pagination: {
+      total,
+      page,
+      pages: Math.ceil(total / limit)
+    },
+    data: bookings
+  });
+});
