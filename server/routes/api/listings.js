@@ -2,6 +2,8 @@ const express = require('express');
 const {
   createListing,
   getListings,
+  getListingById,
+  updateListing,
   uploadListingImage,
   deleteListingImage
 } = require('../../controllers/serviceListingController');
@@ -14,6 +16,7 @@ const router = express.Router();
 
 // Public routes
 router.get('/', getListings);
+router.get('/:id', getListingById);
 
 // Service provider routes
 router.post(
@@ -24,6 +27,13 @@ router.post(
   validateFileType,
   validateFileSize(5), // 5MB limit for service images
   createListing
+);
+
+router.put(
+  '/:id',
+  protect,
+  authorize('service_provider'),
+  updateListing
 );
 
 // Service provider routes for image management

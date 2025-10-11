@@ -170,6 +170,64 @@ exports.getListingById = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Update service listing
+// @route   PUT /api/listings/:id
+// @access  Private (Service provider who owns the listing)
+exports.updateListing = asyncHandler(async (req, res) => {
+  let listing = await ServiceListing.findById(req.params.id);
+
+  if (!listing) {
+    return res.status(404).json({
+      success: false,
+      message: 'Service listing not found'
+    });
+  }
+
+  // Find the service provider profile for the current user
+  const serviceProvider = await ServiceProvider.findOne({ userId: req.user.id });
+
+  // Check if the listing belongs to the provider
+  if (!serviceProvider || listing.serviceProviderId.toString() !== serviceProvider._id.toString()) {
+    return res.status(403).json({
+      success: false,
+      message: 'You are not authorized to update this listing'
+    });
+  }
+
+  const {
+    categoryId,
+    serviceTitle,
+    servicePrice,
+    serviceDetails,
+    tags,
+    duration,
+    serviceLocation,
+    isActive
+  } = req.body;
+
+  // Update fields
+  if (categoryId) listing.categoryId = categoryId;
+  if (serviceTitle) listing.serviceTitle = serviceTitle;
+  if (servicePrice) listing.servicePrice = parseFloat(servicePrice);
+  if (serviceDetails) listing.serviceDetails = serviceDetails;
+  if (duration !== undefined) listing.duration = parseInt(duration);
+  if (serviceLocation !== undefined) listing.serviceLocation = serviceLocation;
+  if (tags) listing.tags = tags.split(',').map(tag => tag.trim());
+  if (isActive !== undefined) listing.isActive = isActive;
+
+  await listing.save();
+
+  // Populate the updated listing
+  listing = await ServiceListing.findById(req.params.id)
+    .populate('serviceProviderId', 'rating')
+    .populate('categoryId', 'categoryName');
+
+  res.status(200).json({
+    success: true,
+    data: listing
+  });
+});
+
 // @desc    Upload service listing image
 // @route   PUT /api/listings/:id/image
 // @access  Private (Service provider who owns the listing)
