@@ -53,3 +53,40 @@ exports.createBooking = asyncHandler(async (req, res) => {
     data: booking
   });
 });
+
+// @desc    Get all bookings for a customer
+// @route   GET /api/bookings/customer
+// @access  Private (Customer only)
+exports.getCustomerBookings = asyncHandler(async (req, res) => {
+  console.log('User ID:', req.user.id);
+  console.log('User Type:', req.user.userType);
+  
+  const bookings = await Booking.find({ customerId: req.user.id })
+    .populate({
+      path: 'serviceListingId',
+      select: 'serviceTitle servicePrice serviceImage',
+      populate: {
+        path: 'categoryId',
+        select: 'categoryName'
+      }
+    })
+    .populate({
+      path: 'serviceProviderId',
+      select: 'userId',
+      populate: {
+        path: 'userId',
+        select: 'firstName lastName profilePicture'
+      }
+    })
+    .sort({ bookingDateTime: -1 });
+  
+  console.log('Found bookings:', bookings.length);
+  
+  // Mongoose find() returns an empty array if no bookings found, so no need for explicit check
+  
+  res.status(200).json({
+    success: true,
+    count: bookings.length,
+    data: bookings
+  });
+});
