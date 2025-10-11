@@ -7,6 +7,7 @@ const {
   deleteListing,
   updateListingStatus,
   getProviderListings,
+  getListingsByProviderId,
   uploadListingImage,
   deleteListingImage
 } = require('../../controllers/serviceListingController');
@@ -20,6 +21,9 @@ const router = express.Router();
 // Public routes
 router.get('/', getListings);
 router.get('/:id', getListingById);
+
+// Get listings by provider ID
+router.get('/provider/:providerId', getListingsByProviderId);
 
 // Service provider routes
 router.post(

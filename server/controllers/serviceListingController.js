@@ -329,6 +329,36 @@ exports.getProviderListings = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Get listings by provider ID
+// @route   GET /api/listings/provider/:providerId
+// @access  Public
+exports.getListingsByProviderId = asyncHandler(async (req, res) => {
+  const providerId = req.params.providerId;
+
+  // Check if provider exists
+  const serviceProvider = await ServiceProvider.findById(providerId);
+
+  if (!serviceProvider) {
+    return res.status(404).json({
+      success: false,
+      message: 'Service provider not found'
+    });
+  }
+
+  const listings = await ServiceListing.find({
+    serviceProviderId: providerId,
+    isActive: true
+  })
+    .populate('categoryId', 'categoryName')
+    .sort({ createdAt: -1 });
+
+  res.status(200).json({
+    success: true,
+    count: listings.length,
+    data: listings
+  });
+});
+
 // @desc    Upload service listing image
 // @route   PUT /api/listings/:id/image
 // @access  Private (Service provider who owns the listing)
