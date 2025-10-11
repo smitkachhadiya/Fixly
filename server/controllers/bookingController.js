@@ -1,6 +1,7 @@
 const Booking = require('../models/Booking');
 const ServiceListing = require('../models/ServiceListing');
 const ServiceProvider = require('../models/ServiceProvider');
+const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 
 // @desc    Create a new booking
@@ -121,5 +122,120 @@ exports.getProviderBookings = asyncHandler(async (req, res) => {
     success: true,
     count: bookings.length,
     data: bookings
+  });
+});
+
+// @desc    Get booking by ID
+// @route   GET /api/bookings/:id
+// @access  Private (Customer or Service Provider)
+exports.getBookingById = asyncHandler(async (req, res) => {
+  const booking = await Booking.findById(req.params.id)
+    .populate({
+      path: 'serviceListingId',
+      select: 'serviceTitle servicePrice serviceDetails serviceImage',
+      populate: {
+        path: 'categoryId',
+        select: 'categoryName'
+      }
+    })
+    .populate({
+      path: 'serviceProviderId',
+      select: 'userId serviceDescription rating',
+      populate: {
+        path: 'userId',
+        select: 'firstName lastName profilePicture phone email'
+      }
+    })
+    .populate({
+      path: 'customerId',
+      select: 'firstName lastName profilePicture phone email address'
+    });
+  
+  if (!booking) {
+    return res.status(404).json({
+      success: false,
+      message: 'Booking not found'
+    });
+  }
+  
+  // Check if the user is authorized to view this booking
+  if (
+    req.user.userType === 'customer' && booking.customerId._id.toString() !== req.user.id &&
+    req.user.userType === 'service_provider' && 
+    booking.serviceProviderId.userId._id.toString() !== req.user.id &&
+    req.user.userType !== 'admin'
+  ) {
+    return res.status(403).json({
+      success: false,
+      message: 'Not authorized to access this booking'
+    });
+  }
+  
+  res.status(200).json({
+    success: true,
+    data: booking
+  });
+});
+
+// @desc    Update booking status
+// @route   PUT /api/bookings/:id/status
+// @access  Private (Customer or Service Provider)
+exports.updateBookingStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body;
+  
+  if (!status) {
+    return res.status(400).json({
+      success: false,
+      message: 'Please provide a status'
+    });
+  }
+  
+  const booking = await Booking.findById(req.params.id);
+  
+  if (!booking) {
+    return res.status(404).json({
+      success: false,
+      message: 'Booking not found'
+    });
+  }
+  
+  // Check if the user is authorized to update this booking
+  const serviceProvider = await ServiceProvider.findOne({ userId: req.user.id });
+  
+  if (
+    req.user.userType === 'customer' && booking.customerId.toString() !== req.user.id &&
+    req.user.userType === 'service_provider' && 
+    serviceProvider && booking.serviceProviderId.toString() !== serviceProvider._id.toString() &&
+    req.user.userType !== 'admin'
+  ) {
+    return res.status(403).json({
+      success: false,
+      message: 'Not authorized to update this booking'
+    });
+  }
+  
+  // Validate status transitions
+  const validTransitions = {
+    'Pending': ['Confirmed', 'Cancelled', 'Rejected'],
+    'Confirmed': ['Completed', 'Cancelled'],
+    'Completed': [],
+    'Cancelled': [],
+    'Rejected': []
+  };
+  
+  if (!validTransitions[booking.bookingStatus].includes(status)) {
+    return res.status(400).json({
+      success: false,
+      message: `Cannot change status from ${booking.bookingStatus} to ${status}`
+    });
+  }
+  
+  // Update booking status
+  booking.bookingStatus = status;
+  await booking.save();
+  
+  res.status(200).json({
+    success: true,
+    data: booking
   });
 });
