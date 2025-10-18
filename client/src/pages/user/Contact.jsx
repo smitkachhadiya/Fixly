@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Footer from '../../components/common/Footer';
+import Layout from '../../components/common/Layout';
 import { motion } from 'framer-motion';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
@@ -41,7 +41,7 @@ const Contact = () => {
   };
 
   return (
-    <>
+    <Layout>
       <main className="min-h-screen bg-[#ebf2f3]">
         {/* Hero Section */}
         <div className="relative overflow-hidden bg-[#45573a] text-white">
@@ -223,8 +223,7 @@ const Contact = () => {
           </motion.div>
         </div>
       </main>
-      <Footer />
-    </>
+    </Layout>
   );
 };
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import AdminLayout from './AdminLayout';
+// Remove AdminLayout import since it will be handled by App.jsx
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -198,472 +198,425 @@ function Users() {
 
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getBadgeStyles()}`}>
-        {icon && <i className={`fas fa-${icon} mr-1`}></i>}
+        {icon && <i className={`fas ${icon} mr-1`}></i>}
         {text}
       </span>
     );
   };
 
-  // Pagination component
-  const Pagination = ({ pagination, onPageChange }) => {
-    const { page, pages, total, limit } = pagination;
-    const startItem = (page - 1) * limit + 1;
-    const endItem = Math.min(page * limit, total);
-
-    return (
-      <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-        <div className="flex flex-1 justify-between sm:hidden">
-          <button
-            onClick={() => onPageChange(page - 1)}
-            disabled={page <= 1}
-            className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Previous
-          </button>
-          <button
-            onClick={() => onPageChange(page + 1)}
-            disabled={page >= pages}
-            className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
-        </div>
-        <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-gray-700">
-              Showing <span className="font-medium">{startItem}</span> to{' '}
-              <span className="font-medium">{endItem}</span> of{' '}
-              <span className="font-medium">{total}</span> results
-            </p>
-          </div>
-          <div>
-            <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-              <button
-                onClick={() => onPageChange(page - 1)}
-                disabled={page <= 1}
-                className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="sr-only">Previous</span>
-                <i className="fas fa-chevron-left h-5 w-5"></i>
-              </button>
-              
-              {Array.from({ length: pages }, (_, i) => i + 1).map((pageNum) => (
-                <button
-                  key={pageNum}
-                  onClick={() => onPageChange(pageNum)}
-                  className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                    pageNum === page
-                      ? 'z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
-                      : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              ))}
-              
-              <button
-                onClick={() => onPageChange(page + 1)}
-                disabled={page >= pages}
-                className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="sr-only">Next</span>
-                <i className="fas fa-chevron-right h-5 w-5"></i>
-              </button>
-            </nav>
-          </div>
-        </div>
-      </div>
-    );
+  // Sort indicator component
+  const SortIndicator = ({ columnKey }) => {
+    if (sortConfig.key !== columnKey) {
+      return <i className="fas fa-sort text-gray-400 ml-1"></i>;
+    }
+    
+    return sortConfig.direction === 'asc' 
+      ? <i className="fas fa-sort-up text-blue-500 ml-1"></i>
+      : <i className="fas fa-sort-down text-blue-500 ml-1"></i>;
   };
 
   return (
-    <AdminLayout title="User Management">
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Page Header */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-                <p className="mt-2 text-gray-600">
-                  Manage and monitor all users in your system
-                </p>
-              </div>
-              <button
-                className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-                onClick={() => window.location.href = '/admin/users/create'}
-              >
-                <i className="fas fa-plus mr-2"></i>
-                Create User
-              </button>
-            </div>
-          </div>
-
-          {/* Success/Error Messages */}
-          <AnimatePresence>
-            {success && (
-              <motion.div
-                className="mb-6 rounded-lg p-4 bg-green-50 border border-green-200"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-              >
-                <div className="flex items-center">
-                  <i className="fas fa-check-circle text-green-600 mr-3"></i>
-                  <p className="text-green-800 font-medium">{success}</p>
-                </div>
-              </motion.div>
-            )}
-
-            {error && (
-              <motion.div
-                className="mb-6 rounded-lg p-4 bg-red-50 border border-red-200"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-              >
-                <div className="flex items-center">
-                  <i className="fas fa-exclamation-circle text-red-600 mr-3"></i>
-                  <p className="text-red-800 font-medium">{error}</p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Filters */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-            <div className="mb-4">
-              <h3 className="text-md font-semibold text-gray-900">Filter Users</h3>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {/* Search Filter */}
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Search</label>
-                <div className="relative">
-                  <i className="fas fa-search absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs"></i>
-                  <input
-                    type="text"
-                    placeholder="Name or email"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-7 pr-3 py-2 text-xs border border-gray-300 rounded-md text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-
-              {/* Role Filter */}
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">User Role</label>
-                <div className="relative">
-                  <select
-                    value={filterRole}
-                    onChange={(e) => setFilterRole(e.target.value)}
-                    className="w-full px-2 py-2 pr-6 text-xs border border-gray-300 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                  >
-                    <option value="all">All Roles</option>
-                    <option value="admin">Admin</option>
-                    <option value="service_provider">Provider</option>
-                    <option value="user">User</option>
-                  </select>
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
-                    <i className="fas fa-chevron-down text-xs"></i>
-                  </div>
-                </div>
-              </div>
-
-              {/* Status Filter */}
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
-                <div className="relative">
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="w-full px-2 py-2 pr-6 text-xs border border-gray-300 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
-                    <i className="fas fa-chevron-down text-xs"></i>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-end space-x-2">
-                <button
-                  type="button"
-                  className="flex-1 px-3 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setFilterRole('all');
-                    setFilterStatus('all');
-                    setPagination(prev => ({ ...prev, page: 1 }));
-                    setTimeout(() => fetchUsers(), 0);
-                  }}
-                >
-                  Reset
-                </button>
-                <button
-                  type="button"
-                  className="flex-1 px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  onClick={handleSearch}
-                >
-                  Apply
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Users Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  All Users
-                  {users.length > 0 && (
-                    <span className="ml-2 text-sm text-gray-500">
-                      ({pagination.total} total)
-                    </span>
-                  )}
-                </h2>
-              </div>
-            </div>
-
-            {isLoading ? (
-              <div className="p-8">
-                <div className="animate-pulse space-y-4">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                        <div className="h-3 bg-gray-200 rounded w-1/3"></div>
-                      </div>
-                      <div className="h-6 bg-gray-200 rounded w-20"></div>
-                      <div className="h-6 bg-gray-200 rounded w-16"></div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : users.length === 0 ? (
-              <div className="p-12 text-center">
-                <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                  <i className="fas fa-users text-gray-400 text-2xl"></i>
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
-                <p className="text-gray-500">Try adjusting your search criteria or filters.</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleSort('firstName')}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Name</span>
-                          <i className={`fas fa-sort ${sortConfig.key === 'firstName' ? 
-                            sortConfig.direction === 'asc' ? 'fa-sort-up' : 'fa-sort-down' : ''} text-gray-400`}></i>
-                        </div>
-                      </th>
-                      <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleSort('userType')}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Role</span>
-                          <i className={`fas fa-sort ${sortConfig.key === 'userType' ? 
-                            sortConfig.direction === 'asc' ? 'fa-sort-up' : 'fa-sort-down' : ''} text-gray-400`}></i>
-                        </div>
-                      </th>
-                      <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleSort('isActive')}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Status</span>
-                          <i className={`fas fa-sort ${sortConfig.key === 'isActive' ? 
-                            sortConfig.direction === 'asc' ? 'fa-sort-up' : 'fa-sort-down' : ''} text-gray-400`}></i>
-                        </div>
-                      </th>
-                      <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleSort('createdAt')}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Created</span>
-                          <i className={`fas fa-sort ${sortConfig.key === 'createdAt' ? 
-                            sortConfig.direction === 'asc' ? 'fa-sort-up' : 'fa-sort-down' : ''} text-gray-400`}></i>
-                        </div>
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {users.map((user) => (
-                      <motion.tr 
-                        key={user._id}
-                        className="hover:bg-gray-50 transition-colors duration-150"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center flex-shrink-0 mr-3">
-                              {user.profilePicture ? (
-                                <img
-                                  className="w-full h-full object-cover"
-                                  src={user.profilePicture}
-                                  alt={`${user.firstName || ''}`}
-                                  onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    e.target.nextSibling.style.display = 'flex';
-                                  }}
-                                />
-                              ) : null}
-                              <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center text-gray-500" style={{display: user.profilePicture ? 'none' : 'flex'}}>
-                                <i className="fas fa-user text-sm"></i>
-                              </div>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium text-gray-900 truncate">
-                                {user.firstName} {user.lastName}
-                              </div>
-                              <div className="text-sm text-gray-500 truncate">
-                                <i className="fas fa-envelope mr-1"></i>
-                                {user.email}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge
-                            type={user.userType || 'user'}
-                            text={user.userType === 'service_provider' ? 'Provider' : user.userType || 'User'}
-                          />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge
-                            type={user.isActive ? 'active' : 'inactive'}
-                            text={user.isActive ? 'Active' : 'Inactive'}
-                            icon={user.isActive ? 'check-circle' : 'times-circle'}
-                          />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDate(user.createdAt)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex space-x-3">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                handleToggleStatus(user);
-                              }}
-                              className={`p-2 rounded-lg transition-colors duration-200 ${
-                                user.isActive 
-                                  ? "text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50" 
-                                  : "text-green-600 hover:text-green-700 hover:bg-green-50"
-                              }`}
-                              title={user.isActive ? "Deactivate user" : "Activate user"}
-                            >
-                              <i className={`fas fa-${user.isActive ? 'ban' : 'check'}`}></i>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                showDeleteConfirmation(user);
-                              }}
-                              className="p-2 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors duration-200"
-                              title="Delete user"
-                            >
-                              <i className="fas fa-trash"></i>
-                            </button>
-                          </div>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* Pagination */}
-            {users.length > 0 && (
-              <Pagination 
-                pagination={pagination} 
-                onPageChange={handlePageChange} 
-              />
-            )}
-          </div>
-
-          {/* Delete Confirmation Dialog */}
-          <AnimatePresence>
-            {showDeleteDialog && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-                <motion.div
-                  className="bg-white rounded-xl shadow-xl max-w-md w-full"
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.9, opacity: 0 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                >
-                  <div className="p-6">
-                    <div className="flex items-center mb-4">
-                      <div className="flex-shrink-0 w-12 h-12 mx-auto bg-red-100 rounded-full flex items-center justify-center">
-                        <i className="fas fa-exclamation-triangle text-red-600 text-xl"></i>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        Delete User
-                      </h3>
-                      <p className="text-sm text-gray-500 mb-6">
-                        Are you sure you want to delete{' '}
-                        <span className="font-medium text-gray-900">
-                          {userToDelete?.firstName} {userToDelete?.lastName}
-                        </span>
-                        ? This action cannot be undone.
-                      </p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
-                      <button 
-                        className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200" 
-                        onClick={() => {
-                          setShowDeleteDialog(false);
-                          setUserToDelete(null);
-                        }}
-                      >
-                        <i className="fas fa-times mr-2"></i>
-                        Cancel
-                      </button>
-                      <button 
-                        className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200" 
-                        onClick={handleDeleteUser}
-                      >
-                        <i className="fas fa-trash mr-2"></i>
-                        Delete User
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            )}
-          </AnimatePresence>
+    // Remove AdminLayout wrapper since it's handled by App.jsx
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+          <p className="mt-1 text-sm text-gray-600">Manage all users in the system</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <Badge type="admin" text={`${users.filter(u => u.userType === 'admin').length} Admins`} />
+          <Badge type="service_provider" text={`${users.filter(u => u.userType === 'service_provider').length} Providers`} />
+          <Badge type="user" text={`${users.filter(u => u.userType === 'user').length} Customers`} />
         </div>
       </div>
-    </AdminLayout>
+
+      {/* Success Message */}
+      <AnimatePresence>
+        {success && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="rounded-md bg-green-50 p-4 border border-green-200"
+          >
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <i className="fas fa-check-circle text-green-400"></i>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-green-800">{success}</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Error Message */}
+      {error && (
+        <div className="rounded-md bg-red-50 p-4 border border-red-200">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <i className="fas fa-exclamation-circle text-red-400"></i>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">{error}</h3>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Filters and Search */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Search */}
+          <div className="md:col-span-2">
+            <div className="relative rounded-md shadow-sm">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i className="fas fa-search text-gray-400"></i>
+              </div>
+              <input
+                type="text"
+                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 py-2 sm:text-sm border-gray-300 rounded-md"
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              />
+              {searchTerm && (
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <button 
+                    className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setPagination(prev => ({ ...prev, page: 1 }));
+                      setTimeout(() => fetchUsers(), 100);
+                    }}
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Role Filter */}
+          <div>
+            <select
+              value={filterRole}
+              onChange={(e) => {
+                setFilterRole(e.target.value);
+                setPagination(prev => ({ ...prev, page: 1 }));
+              }}
+              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+            >
+              <option value="all">All Roles</option>
+              <option value="admin">Admin</option>
+              <option value="service_provider">Service Provider</option>
+              <option value="user">Customer</option>
+            </select>
+          </div>
+
+          {/* Status Filter */}
+          <div>
+            <select
+              value={filterStatus}
+              onChange={(e) => {
+                setFilterStatus(e.target.value);
+                setPagination(prev => ({ ...prev, page: 1 }));
+              }}
+              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+            >
+              <option value="all">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Users Table */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('firstName')}
+                >
+                  <div className="flex items-center">
+                    User
+                    <SortIndicator columnKey="firstName" />
+                  </div>
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('userType')}
+                >
+                  <div className="flex items-center">
+                    Role
+                    <SortIndicator columnKey="userType" />
+                  </div>
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('email')}
+                >
+                  <div className="flex items-center">
+                    Email
+                    <SortIndicator columnKey="email" />
+                  </div>
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('phone')}
+                >
+                  <div className="flex items-center">
+                    Phone
+                    <SortIndicator columnKey="phone" />
+                  </div>
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('createdAt')}
+                >
+                  <div className="flex items-center">
+                    Joined
+                    <SortIndicator columnKey="createdAt" />
+                  </div>
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('isActive')}
+                >
+                  <div className="flex items-center">
+                    Status
+                    <SortIndicator columnKey="isActive" />
+                  </div>
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {isLoading ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-4 text-center">
+                    <div className="flex justify-center">
+                      <div className="w-8 h-8 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
+                    </div>
+                  </td>
+                </tr>
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                    <i className="fas fa-users text-gray-300 text-3xl mb-2 block"></i>
+                    No users found
+                  </td>
+                </tr>
+              ) : (
+                users.map((user) => (
+                  <motion.tr 
+                    key={user._id} 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="hover:bg-gray-50"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          {user.profilePicture ? (
+                            <img className="h-10 w-10 rounded-full" src={user.profilePicture} alt={user.firstName} />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                              <i className="fas fa-user text-gray-500"></i>
+                            </div>
+                          )}
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {user.firstName} {user.lastName}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {user.businessName || 'N/A'}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge 
+                        type={user.userType} 
+                        text={user.userType === 'service_provider' ? 'Provider' : user.userType.charAt(0).toUpperCase() + user.userType.slice(1)} 
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {user.email}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {user.phone || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(user.createdAt)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge 
+                        type={user.isActive ? 'active' : 'inactive'} 
+                        text={user.isActive ? 'Active' : 'Inactive'} 
+                        icon={user.isActive ? 'fa-check-circle' : 'fa-times-circle'}
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end space-x-2">
+                        <button
+                          onClick={() => handleToggleStatus(user)}
+                          className={`inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                            user.isActive
+                              ? 'bg-yellow-500 hover:bg-yellow-600 focus:ring-yellow-500'
+                              : 'bg-green-500 hover:bg-green-600 focus:ring-green-500'
+                          }`}
+                        >
+                          {user.isActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button
+                          onClick={() => showDeleteConfirmation(user)}
+                          className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </motion.tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {!isLoading && users.length > 0 && (
+          <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <button
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page === 1}
+                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page === pagination.pages}
+                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700">
+                  Showing <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span> to{' '}
+                  <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
+                  <span className="font-medium">{pagination.total}</span> results
+                </p>
+              </div>
+              <div>
+                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <button
+                    onClick={() => handlePageChange(pagination.page - 1)}
+                    disabled={pagination.page === 1}
+                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    <span className="sr-only">Previous</span>
+                    <i className="fas fa-chevron-left"></i>
+                  </button>
+                  {[...Array(pagination.pages)].map((_, index) => {
+                    const pageNumber = index + 1;
+                    return (
+                      <button
+                        key={pageNumber}
+                        onClick={() => handlePageChange(pageNumber)}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                          pagination.page === pageNumber
+                            ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNumber}
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={() => handlePageChange(pagination.page + 1)}
+                    disabled={pagination.page === pagination.pages}
+                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    <span className="sr-only">Next</span>
+                    <i className="fas fa-chevron-right"></i>
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AnimatePresence>
+        {showDeleteDialog && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+          >
+            <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+              <div className="mt-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium text-gray-900">Confirm Deletion</h3>
+                  <button
+                    onClick={() => setShowDeleteDialog(false)}
+                    className="text-gray-400 hover:text-gray-500"
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
+                </div>
+                
+                <div className="mt-4">
+                  <p className="text-sm text-gray-500">
+                    Are you sure you want to delete <span className="font-medium">{userToDelete?.firstName} {userToDelete?.lastName}</span>? 
+                    This action cannot be undone.
+                  </p>
+                </div>
+                
+                <div className="mt-6 flex justify-end space-x-3">
+                  <button
+                    onClick={() => setShowDeleteDialog(false)}
+                    className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteUser}
+                    className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+    // Remove AdminLayout wrapper since it's handled by App.jsx
   );
 }
 

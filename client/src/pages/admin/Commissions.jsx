@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import AdminLayout from './AdminLayout';
 import Table from '../../components/admin/shared/Table';
 import Modal from '../../components/admin/shared/Modal';
 
@@ -468,7 +467,7 @@ function Commissions() {
   };
 
   return (
-    <AdminLayout title="Commission Management">
+    <div>
       {error && (
         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
           <p>{error}</p>
@@ -507,7 +506,7 @@ function Commissions() {
       >
         {renderModalContent()}
       </Modal>
-    </AdminLayout>
+    </div>
   );
 }
 

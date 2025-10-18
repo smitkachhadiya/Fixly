@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import AdminLayout from './AdminLayout';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { Bar, Line, Pie } from 'react-chartjs-2';
@@ -228,7 +227,6 @@ const Reports = () => {
   };
 
   return (
-    <AdminLayout title="Reports & Analytics">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -457,7 +455,6 @@ const Reports = () => {
           </div>
         )}
       </div>
-    </AdminLayout>
   );
 };
 

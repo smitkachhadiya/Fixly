@@ -167,6 +167,11 @@ exports.getServiceProviders = asyncHandler(async (req, res) => {
     query.availability = req.query.availability;
   }
 
+  // Filter by active status if provided
+  if (req.query.isActive) {
+    query.isActive = req.query.isActive === 'true';
+  }
+
   // Search by name or email
   if (req.query.search) {
     // We need to search in the User model since name and email are stored there
@@ -225,17 +230,35 @@ exports.getServiceProviders = asyncHandler(async (req, res) => {
   // Sorting
   let sort = {};
   if (req.query.sort) {
-    if (req.query.sort === 'rating') {
-      sort = { rating: -1 };
-    } else if (req.query.sort === 'newest') {
-      sort = { createdAt: -1 };
+    const sortField = req.query.sort;
+    const sortOrder = req.query.order === 'desc' ? -1 : 1;
+    
+    // Map frontend sort fields to actual database fields
+    const sortMapping = {
+      'firstName': 'userId.firstName',
+      'businessName': 'userId.businessName',
+      'email': 'userId.email',
+      'phone': 'userId.phone',
+      'isActive': 'userId.isActive',
+      'verificationStatus': 'verificationStatus',
+      'createdAt': 'createdAt'
+    };
+    
+    const actualSortField = sortMapping[sortField] || sortField;
+    
+    if (actualSortField === 'rating') {
+      sort = { rating: sortOrder };
+    } else if (actualSortField === 'createdAt') {
+      sort = { createdAt: sortOrder };
+    } else {
+      sort = { [actualSortField]: sortOrder };
     }
   } else {
-    sort = { rating: -1 }; // Default sort by highest rating
+    sort = { createdAt: -1 }; // Default sort by newest
   }
 
   const providers = await ServiceProvider.find(query)
-    .populate('userId', 'firstName lastName email profilePicture')
+    .populate('userId', 'firstName lastName email profilePicture phone businessName address description isActive')
     .populate('serviceCategory', 'categoryName')
     .sort(sort)
     .skip(startIndex)

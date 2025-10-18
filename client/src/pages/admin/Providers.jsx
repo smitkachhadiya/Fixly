@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import AdminLayout from './AdminLayout';
+// Remove AdminLayout import since it will be handled by App.jsx
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -13,7 +13,7 @@ function Providers() {
   const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
   const [pagination, setPagination] = useState({ page: 1, total: 0, limit: 10 });
   const [filterVerification, setFilterVerification] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterIsActive, setFilterIsActive] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [providerToDelete, setProviderToDelete] = useState(null);
@@ -38,14 +38,29 @@ function Providers() {
 
     try {
       // Build query parameters
-      let queryParams = `page=${pagination.page}&limit=${pagination.limit}&sort=${sortConfig.key}&order=${sortConfig.direction}`;
+      let queryParams = `page=${pagination.page}&limit=${pagination.limit}`;
+      
+      // Add sorting parameters
+      // Map the sort key to the correct field
+      const sortKeyMapping = {
+        'userId.firstName': 'firstName',
+        'userId.businessName': 'businessName',
+        'userId.email': 'email',
+        'userId.phone': 'phone',
+        'userId.isActive': 'isActive',
+        'verificationStatus': 'verificationStatus',
+        'createdAt': 'createdAt'
+      };
+      
+      const actualSortKey = sortKeyMapping[sortConfig.key] || sortConfig.key;
+      queryParams += `&sort=${actualSortKey}&order=${sortConfig.direction}`;
 
       if (filterVerification !== 'all') {
         queryParams += `&verificationStatus=${filterVerification}`;
       }
 
-      if (filterStatus !== 'all') {
-        queryParams += `&status=${filterStatus}`;
+      if (filterIsActive !== 'all') {
+        queryParams += `&isActive=${filterIsActive}`;
       }
 
       if (searchTerm) {
@@ -83,13 +98,24 @@ function Providers() {
   useEffect(() => {
     fetchProviders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, pagination.page, pagination.limit, sortConfig.key, sortConfig.direction, filterVerification, filterStatus, searchTerm]);
+  }, [token, pagination.page, pagination.limit, sortConfig.key, sortConfig.direction, filterVerification, filterIsActive, searchTerm]);
 
   // Handle sorting
   const handleSort = (key) => {
+    // Map UI column keys to actual data keys
+    const keyMapping = {
+      'firstName': 'userId.firstName',
+      'businessName': 'userId.businessName',
+      'email': 'userId.email',
+      'phone': 'userId.phone',
+      'isActive': 'userId.isActive'
+    };
+    
+    const actualKey = keyMapping[key] || key;
+    
     setSortConfig(prevConfig => ({
-      key,
-      direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc'
+      key: actualKey,
+      direction: prevConfig.key === actualKey && prevConfig.direction === 'asc' ? 'desc' : 'asc'
     }));
   };
 
@@ -201,622 +227,637 @@ function Providers() {
     };
 
     return (
-      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getBadgeStyles()} transition-all duration-200`}>
-        {icon && <i className={`fas fa-${icon} mr-1.5 text-xs`}></i>}
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getBadgeStyles()}`}>
+        {icon && <i className={`fas ${icon} mr-1`}></i>}
         {text}
       </span>
     );
   };
 
-  // Pagination component
-  const Pagination = ({ pagination, onPageChange }) => {
-    const { page, pages, total, limit } = pagination;
-    const startItem = (page - 1) * limit + 1;
-    const endItem = Math.min(page * limit, total);
+  // Sort indicator component
+  const SortIndicator = ({ columnKey }) => {
+    const keyMapping = {
+      'firstName': 'userId.firstName',
+      'businessName': 'userId.businessName',
+      'email': 'userId.email',
+      'phone': 'userId.phone',
+      'isActive': 'userId.isActive'
+    };
+    
+    const actualKey = keyMapping[columnKey] || columnKey;
+    
+    if (sortConfig.key === actualKey) {
+      return (
+        <i className={`fas fa-sort-${sortConfig.direction === 'asc' ? 'up' : 'down'} ml-1`}></i>
+      );
+    }
+    return <i className="fas fa-sort ml-1"></i>;
+  };
+
+  // Quick view modal
+  const QuickViewModal = () => {
+    if (!selectedProvider) return null;
 
     return (
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-        <div className="flex items-center mb-4 sm:mb-0">
-          <p className="text-sm text-gray-700">
-            Showing <span className="font-medium">{startItem}</span> to{' '}
-            <span className="font-medium">{endItem}</span> of{' '}
-            <span className="font-medium">{total}</span> results
-          </p>
-        </div>
-        <div>
-          <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        onClick={() => setShowQuickView(false)}
+      >
+        <div 
+          className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h3 className="text-lg font-medium text-gray-900">Provider Details</h3>
             <button
-              onClick={() => onPageChange(page - 1)}
-              disabled={page <= 1}
-              className="relative inline-flex items-center rounded-l-md px-3 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              onClick={() => setShowQuickView(false)}
+              className="text-gray-400 hover:text-gray-500 focus:outline-none"
             >
-              <span className="sr-only">Previous</span>
-              <i className="fas fa-chevron-left h-5 w-5"></i>
+              <i className="fas fa-times"></i>
             </button>
+          </div>
+          <div className="p-6">
+            <div className="flex items-start space-x-4 mb-6">
+              <div className="flex-shrink-0">
+                {selectedProvider.userId?.profilePicture ? (
+                  <img 
+                    className="h-16 w-16 rounded-full" 
+                    src={selectedProvider.userId.profilePicture} 
+                    alt={selectedProvider.userId.firstName} 
+                  />
+                ) : (
+                  <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center">
+                    <i className="fas fa-user text-gray-500 text-xl"></i>
+                  </div>
+                )}
+              </div>
+              <div>
+                <h4 className="text-xl font-bold text-gray-900">
+                  {selectedProvider.userId?.firstName} {selectedProvider.userId?.lastName}
+                </h4>
+                <p className="text-gray-600">{selectedProvider.userId?.email}</p>
+                <div className="flex items-center mt-1">
+                  <Badge 
+                    type={selectedProvider.verificationStatus?.toLowerCase() || 'pending'} 
+                    text={selectedProvider.verificationStatus || 'Pending'} 
+                  />
+                  <span className="mx-2">•</span>
+                  <Badge 
+                    type={selectedProvider.userId?.isActive ? 'active' : 'inactive'} 
+                    text={selectedProvider.userId?.isActive ? 'Active' : 'Inactive'} 
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Phone</label>
+                <p className="mt-1 text-sm text-gray-900">{selectedProvider.userId?.phone || 'N/A'}</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Business Name</label>
+                <p className="mt-1 text-sm text-gray-900">{selectedProvider.userId?.businessName || 'N/A'}</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Verification Status</label>
+                <p className="mt-1 text-sm text-gray-900">{selectedProvider.verificationStatus || 'N/A'}</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Member Since</label>
+                <p className="mt-1 text-sm text-gray-900">{formatDate(selectedProvider.createdAt)}</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Service Category</label>
+                <p className="mt-1 text-sm text-gray-900">
+                  {selectedProvider.serviceCategory && selectedProvider.serviceCategory.length > 0
+                    ? selectedProvider.serviceCategory.map(cat => cat.categoryName).join(', ')
+                    : 'N/A'}
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Commission Rate</label>
+                <p className="mt-1 text-sm text-gray-900">{selectedProvider.commissionRate || 0}%</p>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-700">Service Description</label>
+              <p className="mt-1 text-sm text-gray-900">{selectedProvider.serviceDescription || 'N/A'}</p>
+            </div>
+
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-700">Business Address</label>
+              <p className="mt-1 text-sm text-gray-900">
+                {selectedProvider.userId?.address 
+                  ? `${selectedProvider.userId.address.street || ''}, ${selectedProvider.userId.address.city || ''}, ${selectedProvider.userId.address.state || ''} ${selectedProvider.userId.address.zipCode || ''}`
+                  : 'N/A'}
+              </p>
+            </div>
             
-            {Array.from({ length: pages }, (_, i) => i + 1).map((pageNum) => (
-              <button
-                key={pageNum}
-                onClick={() => onPageChange(pageNum)}
-                className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                  pageNum === page
-                    ? 'z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
-                    : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
-                } transition-colors duration-200`}
-              >
-                {pageNum}
-              </button>
-            ))}
+            <div className="mt-6">
+              <label className="block text-sm font-medium text-gray-700">Description</label>
+              <p className="mt-1 text-sm text-gray-900">{selectedProvider.userId?.description || 'N/A'}</p>
+            </div>
             
-            <button
-              onClick={() => onPageChange(page + 1)}
-              disabled={page >= pages}
-              className="relative inline-flex items-center rounded-r-md px-3 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-            >
-              <span className="sr-only">Next</span>
-              <i className="fas fa-chevron-right h-5 w-5"></i>
-            </button>
-          </nav>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-xs text-blue-800">Listings</p>
+                <p className="text-lg font-bold text-blue-900">{selectedProvider.listingCount || 0}</p>
+              </div>
+              <div className="bg-green-50 p-3 rounded-lg">
+                <p className="text-xs text-green-800">Bookings</p>
+                <p className="text-lg font-bold text-green-900">{selectedProvider.bookingCount || 0}</p>
+              </div>
+              <div className="bg-purple-50 p-3 rounded-lg">
+                <p className="text-xs text-purple-800">Reviews</p>
+                <p className="text-lg font-bold text-purple-900">{selectedProvider.reviewCount || 0}</p>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </motion.div>
     );
   };
 
   return (
-    <AdminLayout title="Service Provider Management">
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Page Header with Stats */}
-          <div className="mb-8">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Service Providers</h1>
-                <p className="mt-2 text-gray-600">
-                  Manage and monitor all service providers in your system
-                </p>
+    // Remove AdminLayout wrapper since it's handled by App.jsx
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Service Providers</h1>
+          <p className="mt-1 text-sm text-gray-600">Manage all service providers in the system</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <Badge type="verified" text={`${providers.filter(p => p.verificationStatus === 'Verified').length} Verified`} />
+          <Badge type="pending" text={`${providers.filter(p => p.verificationStatus === 'Pending').length} Pending`} />
+          <Badge type="rejected" text={`${providers.filter(p => p.verificationStatus === 'Rejected').length} Rejected`} />
+        </div>
+      </div>
+
+      {/* Success Message */}
+      <AnimatePresence>
+        {success && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="rounded-md bg-green-50 p-4 border border-green-200"
+          >
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <i className="fas fa-check-circle text-green-400"></i>
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-                  <div className="text-sm text-gray-500">Total Providers</div>
-                  <div className="text-2xl font-bold text-gray-900">{pagination.total || 0}</div>
-                </div>
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-                  <div className="text-sm text-gray-500">Verified</div>
-                  <div className="text-2xl font-bold text-green-600">
-                    {providers.filter(p => p.verificationStatus === 'Verified').length}
-                  </div>
-                </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-green-800">{success}</p>
               </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Error Message */}
+      {error && (
+        <div className="rounded-md bg-red-50 p-4 border border-red-200">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <i className="fas fa-exclamation-circle text-red-400"></i>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">{error}</h3>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Success/Error Messages */}
-          <AnimatePresence>
-            {success && (
-              <motion.div
-                className="mb-6 rounded-lg p-4 bg-green-50 border border-green-200"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-              >
-                <div className="flex items-center">
-                  <i className="fas fa-check-circle text-green-600 mr-3"></i>
-                  <p className="text-green-800 font-medium">{success}</p>
-                </div>
-              </motion.div>
-            )}
-
-            {error && (
-              <motion.div
-                className="mb-6 rounded-lg p-4 bg-red-50 border border-red-200"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-              >
-                <div className="flex items-center">
-                  <i className="fas fa-exclamation-circle text-red-600 mr-3"></i>
-                  <p className="text-red-800 font-medium">{error}</p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Filters */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-            <div className="mb-4">
-              <h3 className="text-md font-semibold text-gray-900">Filter Providers</h3>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {/* Search Filter */}
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Search</label>
-                <div className="relative">
-                  <i className="fas fa-search absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs"></i>
-                  <input
-                    type="text"
-                    placeholder="Name or email"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-7 pr-3 py-2 text-xs border border-gray-300 rounded-md text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
+      {/* Filters and Search */}
+      <div className="bg-white rounded-lg shadow p-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Search */}
+          <div className="md:col-span-2">
+            <div className="relative rounded-md shadow-sm">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i className="fas fa-search text-gray-400"></i>
               </div>
-
-              {/* Verification Status Filter */}
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Verification</label>
-                <div className="relative">
-                  <select
-                    value={filterVerification}
-                    onChange={(e) => setFilterVerification(e.target.value)}
-                    className="w-full px-2 py-2 pr-6 text-xs border border-gray-300 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="Verified">Verified</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Rejected">Rejected</option>
-                  </select>
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
-                    <i className="fas fa-chevron-down text-xs"></i>
-                  </div>
-                </div>
-              </div>
-
-              {/* Account Status Filter */}
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Account Status</label>
-                <div className="relative">
-                  <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="w-full px-2 py-2 pr-6 text-xs border border-gray-300 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 appearance-none"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                  <div className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
-                    <i className="fas fa-chevron-down text-xs"></i>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-end space-x-2">
-                <button
-                  type="button"
-                  className="flex-1 px-3 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setFilterVerification('all');
-                    setFilterStatus('all');
-                    setPagination(prev => ({ ...prev, page: 1 }));
-                    setTimeout(() => fetchProviders(), 0);
-                  }}
-                >
-                  Reset
-                </button>
-                <button
-                  type="button"
-                  className="flex-1 px-3 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  onClick={handleSearch}
-                >
-                  Apply
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Providers Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md">
-            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  All Service Providers
-                  {providers.length > 0 && (
-                    <span className="ml-2 text-sm text-gray-500">
-                      ({pagination.total} total)
-                    </span>
-                  )}
-                </h2>
-                <div className="flex items-center space-x-2">
-                  <div className="text-sm text-gray-500">
-                    Showing {Math.min(providers.length, pagination.limit)} of {pagination.total} providers
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {isLoading ? (
-              <div className="p-8">
-                <div className="animate-pulse space-y-4">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="flex items-center space-x-4">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                        <div className="h-3 bg-gray-200 rounded w-1/3"></div>
-                      </div>
-                      <div className="h-6 bg-gray-200 rounded w-20"></div>
-                      <div className="h-6 bg-gray-200 rounded w-16"></div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : providers.length === 0 ? (
-              <div className="p-12 text-center">
-                <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                  <i className="fas fa-user-tie text-gray-400 text-2xl"></i>
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No service providers found</h3>
-                <p className="text-gray-500">Try adjusting your search criteria or filters.</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150"
-                        onClick={() => handleSort('userId.firstName')}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Provider</span>
-                          <i className={`fas fa-sort ${sortConfig.key === 'userId.firstName' ? 
-                            sortConfig.direction === 'asc' ? 'fa-sort-up' : 'fa-sort-down' : ''} text-gray-400`}></i>
-                        </div>
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <div className="flex items-center">
-                          <span>Service Category</span>
-                        </div>
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <div className="flex items-center">
-                          <span>Experience</span>
-                        </div>
-                      </th>
-                      <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150"
-                        onClick={() => handleSort('verificationStatus')}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Verification</span>
-                          <i className={`fas fa-sort ${sortConfig.key === 'verificationStatus' ? 
-                            sortConfig.direction === 'asc' ? 'fa-sort-up' : 'fa-sort-down' : ''} text-gray-400`}></i>
-                        </div>
-                      </th>
-                      <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-150"
-                        onClick={() => handleSort('createdAt')}
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Created</span>
-                          <i className={`fas fa-sort ${sortConfig.key === 'createdAt' ? 
-                            sortConfig.direction === 'asc' ? 'fa-sort-up' : 'fa-sort-down' : ''} text-gray-400`}></i>
-                        </div>
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <div className="flex items-center">
-                          <span>Actions</span>
-                        </div>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {providers.map((provider) => (
-                      <motion.tr 
-                        key={provider._id}
-                        className="hover:bg-gray-50 transition-colors duration-150"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center flex-shrink-0 mr-3">
-                              {provider.userId?.profilePicture || provider.userId?.profileImage ? (
-                                <>
-                                  <img
-                                    className="w-full h-full object-cover"
-                                    src={provider.userId?.profilePicture || provider.userId?.profileImage}
-                                    alt={`${provider.userId?.firstName || ''} ${provider.userId?.lastName || ''}`}
-                                    onError={(e) => {
-                                      e.target.style.display = 'none';
-                                      e.target.nextSibling.style.display = 'flex';
-                                    }}
-                                  />
-                                  <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center text-gray-500" style={{display: 'none'}}>
-                                    <i className="fas fa-user text-sm"></i>
-                                  </div>
-                                </>
-                              ) : (
-                                <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-                                  <i className="fas fa-user text-sm"></i>
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium text-gray-900 truncate">
-                                {provider.userId?.firstName} {provider.userId?.lastName}
-                              </div>
-                              <div className="text-sm text-gray-500 truncate">
-                                <i className="fas fa-envelope mr-1"></i>
-                                {provider.userId?.email}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 max-w-xs truncate">
-                            {provider.serviceCategory?.map(cat => cat.categoryName).join(', ') || 'N/A'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {provider.experienceYears ? `${provider.experienceYears} years` : 'Not specified'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Badge
-                            type={provider.verificationStatus === 'Verified' ? 'verified' : provider.verificationStatus === 'Rejected' ? 'rejected' : 'pending'}
-                            text={provider.verificationStatus || 'Pending'}
-                            icon={provider.verificationStatus === 'Verified' ? 'check-circle' : provider.verificationStatus === 'Rejected' ? 'times-circle' : 'clock'}
-                          />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDate(provider.createdAt)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex space-x-2">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                setSelectedProvider(provider);
-                                setShowQuickView(true);
-                              }}
-                              className="p-2 rounded-lg text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors duration-200"
-                              title="Quick view"
-                            >
-                              <i className="fas fa-eye text-base"></i>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                handleToggleVerification(provider);
-                              }}
-                              className={`p-2 rounded-lg transition-colors duration-200 ${
-                                provider.verificationStatus === 'Verified' 
-                                  ? "text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50" 
-                                  : "text-green-600 hover:text-green-700 hover:bg-green-50"
-                              }`}
-                              title={provider.verificationStatus === 'Verified' ? "Reject provider" : "Verify provider"}
-                            >
-                              <i className={`fas fa-${provider.verificationStatus === 'Verified' ? 'ban' : 'check'} text-base`}></i>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                showDeleteConfirmation(provider);
-                              }}
-                              className="p-2 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors duration-200"
-                              title="Delete provider"
-                            >
-                              <i className="fas fa-trash text-base"></i>
-                            </button>
-                          </div>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* Pagination */}
-            {providers.length > 0 && (
-              <Pagination 
-                pagination={pagination} 
-                onPageChange={handlePageChange} 
+              <input
+                type="text"
+                className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 pr-10 py-2 sm:text-sm border-gray-300 rounded-md"
+                placeholder="Search providers..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               />
-            )}
+              {searchTerm && (
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  <button 
+                    className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setPagination(prev => ({ ...prev, page: 1 }));
+                      setTimeout(() => fetchProviders(), 100);
+                    }}
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Quick View Modal */}
-          <AnimatePresence>
-            {showQuickView && selectedProvider && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-                <motion.div
-                  className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.9, opacity: 0 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+          {/* Verification Status Filter */}
+          <div>
+            <select
+              value={filterVerification}
+              onChange={(e) => {
+                setFilterVerification(e.target.value);
+                setPagination(prev => ({ ...prev, page: 1 }));
+              }}
+              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+            >
+              <option value="all">All Verification Statuses</option>
+              <option value="Verified">Verified</option>
+              <option value="Pending">Pending</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+
+          {/* Active Status Filter */}
+          <div>
+            <select
+              value={filterIsActive}
+              onChange={(e) => {
+                setFilterIsActive(e.target.value);
+                setPagination(prev => ({ ...prev, page: 1 }));
+              }}
+              className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+            >
+              <option value="all">All Statuses</option>
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Providers Table */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('firstName')}
                 >
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xl font-bold text-gray-900">Provider Details</h3>
-                      <button
-                        onClick={() => setShowQuickView(false)}
-                        className="text-gray-400 hover:text-gray-500 transition-colors duration-200"
-                      >
-                        <i className="fas fa-times text-xl"></i>
-                      </button>
+                  <div className="flex items-center">
+                    Provider
+                    <SortIndicator columnKey="firstName" />
+                  </div>
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('businessName')}
+                >
+                  <div className="flex items-center">
+                    Business
+                    <SortIndicator columnKey="businessName" />
+                  </div>
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('email')}
+                >
+                  <div className="flex items-center">
+                    Email
+                    <SortIndicator columnKey="email" />
+                  </div>
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('phone')}
+                >
+                  <div className="flex items-center">
+                    Phone
+                    <SortIndicator columnKey="phone" />
+                  </div>
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('verificationStatus')}
+                >
+                  <div className="flex items-center">
+                    Verification
+                    <SortIndicator columnKey="verificationStatus" />
+                  </div>
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('isActive')}
+                >
+                  <div className="flex items-center">
+                    Status
+                    <SortIndicator columnKey="isActive" />
+                  </div>
+                </th>
+                <th 
+                  scope="col" 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSort('createdAt')}
+                >
+                  <div className="flex items-center">
+                    Joined
+                    <SortIndicator columnKey="createdAt" />
+                  </div>
+                </th>
+                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {isLoading ? (
+                <tr>
+                  <td colSpan="8" className="px-6 py-4 text-center">
+                    <div className="flex justify-center">
+                      <div className="w-8 h-8 border-t-2 border-b-2 border-blue-500 rounded-full animate-spin"></div>
                     </div>
-                    
-                    <div className="space-y-6">
-                      {/* Provider Info */}
-                      <div className="flex items-start space-x-4">
-                        <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center flex-shrink-0">
-                          {selectedProvider.userId?.profilePicture || selectedProvider.userId?.profileImage ? (
-                            <>
-                              <img
-                                className="w-full h-full object-cover"
-                                src={selectedProvider.userId?.profilePicture || selectedProvider.userId?.profileImage}
-                                alt={`${selectedProvider.userId?.firstName || ''} ${selectedProvider.userId?.lastName || ''}`}
-                                onError={(e) => {
-                                  e.target.style.display = 'none';
-                                  e.target.nextSibling.style.display = 'flex';
-                                }}
-                              />
-                              <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center text-gray-500" style={{display: 'none'}}>
-                                <i className="fas fa-user text-sm"></i>
-                              </div>
-                            </>
+                  </td>
+                </tr>
+              ) : providers.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="px-6 py-4 text-center text-gray-500">
+                    <i className="fas fa-user-tie text-gray-300 text-3xl mb-2 block"></i>
+                    No service providers found
+                  </td>
+                </tr>
+              ) : (
+                providers.map((provider) => (
+                  <motion.tr 
+                    key={provider._id} 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="hover:bg-gray-50"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          {provider.userId?.profilePicture ? (
+                            <img className="h-10 w-10 rounded-full" src={provider.userId.profilePicture} alt={provider.userId.firstName} />
                           ) : (
-                            <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-                              <i className="fas fa-user text-sm"></i>
+                            <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                              <i className="fas fa-user text-gray-500"></i>
                             </div>
                           )}
                         </div>
-                        <div>
-                          <h4 className="text-lg font-semibold text-gray-900">
-                            {selectedProvider.userId?.firstName} {selectedProvider.userId?.lastName}
-                          </h4>
-                          <p className="text-gray-600">{selectedProvider.userId?.email}</p>
-                          <div className="mt-2">
-                            <Badge
-                              type={selectedProvider.verificationStatus === 'Verified' ? 'verified' : selectedProvider.verificationStatus === 'Rejected' ? 'rejected' : 'pending'}
-                              text={selectedProvider.verificationStatus || 'Pending'}
-                              icon={selectedProvider.verificationStatus === 'Verified' ? 'check-circle' : selectedProvider.verificationStatus === 'Rejected' ? 'times-circle' : 'clock'}
-                            />
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {provider.userId?.firstName} {provider.userId?.lastName}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {provider.userId?.businessName || 'N/A'}
                           </div>
                         </div>
                       </div>
-                      
-                      {/* Provider Details */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <h5 className="text-sm font-medium text-gray-500 mb-1">Service Categories</h5>
-                          <p className="text-gray-900">
-                            {selectedProvider.serviceCategory?.map(cat => cat.categoryName).join(', ') || 'N/A'}
-                          </p>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <h5 className="text-sm font-medium text-gray-500 mb-1">Experience</h5>
-                          <p className="text-gray-900">
-                            {selectedProvider.experienceYears ? `${selectedProvider.experienceYears} years` : 'Not specified'}
-                          </p>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <h5 className="text-sm font-medium text-gray-500 mb-1">Hourly Rate</h5>
-                          <p className="text-gray-900">
-                            {selectedProvider.hourlyRate ? `$${selectedProvider.hourlyRate}/hour` : 'Not specified'}
-                          </p>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <h5 className="text-sm font-medium text-gray-500 mb-1">Created</h5>
-                          <p className="text-gray-900">
-                            {formatDate(selectedProvider.createdAt)}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      {/* Description */}
-                      {selectedProvider.description && (
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <h5 className="text-sm font-medium text-gray-500 mb-1">Description</h5>
-                          <p className="text-gray-900">{selectedProvider.description}</p>
-                        </div>
-                      )}
-                      
-                      {/* Actions */}
-                      <div className="flex justify-end space-x-3 pt-4">
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {provider.userId?.businessName || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {provider.userId?.email || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {provider.userId?.phone || 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge 
+                        type={provider.verificationStatus?.toLowerCase() || 'pending'} 
+                        text={provider.verificationStatus || 'Pending'} 
+                        icon={provider.verificationStatus === 'Verified' ? 'fa-check-circle' : provider.verificationStatus === 'Rejected' ? 'fa-times-circle' : 'fa-clock'}
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge 
+                        type={provider.userId?.isActive ? 'active' : 'inactive'} 
+                        text={provider.userId?.isActive ? 'Active' : 'Inactive'} 
+                        icon={provider.userId?.isActive ? 'fa-check-circle' : 'fa-times-circle'}
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(provider.createdAt)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex justify-end space-x-2">
                         <button
                           onClick={() => {
-                            setShowQuickView(false);
-                            showDeleteConfirmation(selectedProvider);
+                            setSelectedProvider(provider);
+                            setShowQuickView(true);
                           }}
-                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200"
+                          className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         >
-                          <i className="fas fa-trash mr-2"></i>
-                          Delete Provider
+                          <i className="fas fa-eye mr-1"></i> View
                         </button>
                         <button
-                          onClick={() => {
-                            setShowQuickView(false);
-                            handleToggleVerification(selectedProvider);
-                          }}
-                          className={`inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors duration-200 ${
-                            selectedProvider.verificationStatus === 'Verified' 
-                              ? "bg-yellow-500 hover:bg-yellow-600 focus:ring-yellow-500" 
-                              : "bg-green-500 hover:bg-green-600 focus:ring-green-500"
+                          onClick={() => handleToggleVerification(provider)}
+                          className={`inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                            provider.verificationStatus === 'Verified'
+                              ? 'bg-yellow-500 hover:bg-yellow-600 focus:ring-yellow-500'
+                              : 'bg-green-500 hover:bg-green-600 focus:ring-green-500'
                           }`}
                         >
-                          <i className={`fas fa-${selectedProvider.verificationStatus === 'Verified' ? 'ban' : 'check'} mr-2`}></i>
-                          {selectedProvider.verificationStatus === 'Verified' ? "Reject Provider" : "Verify Provider"}
+                          {provider.verificationStatus === 'Verified' ? 'Reject' : 'Verify'}
+                        </button>
+                        <button
+                          onClick={() => showDeleteConfirmation(provider)}
+                          className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                        >
+                          <i className="fas fa-trash mr-1"></i> Delete
                         </button>
                       </div>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            )}
-          </AnimatePresence>
-          
-          {/* Delete Confirmation Dialog */}
-          <AnimatePresence>
-            {showDeleteDialog && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-                <motion.div
-                  className="bg-white rounded-xl shadow-xl max-w-md w-full"
-                  initial={{ scale: 0.9, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.9, opacity: 0 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                >
-                  <div className="p-6">
-                    <div className="flex items-center mb-4">
-                      <div className="flex-shrink-0 w-12 h-12 mx-auto bg-red-100 rounded-full flex items-center justify-center">
-                        <i className="fas fa-exclamation-triangle text-red-600 text-xl"></i>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        Delete Service Provider
-                      </h3>
-                      <p className="text-sm text-gray-500 mb-6">
-                        Are you sure you want to delete{' '}
-                        <span className="font-medium text-gray-900">
-                          {providerToDelete?.userId?.firstName} {providerToDelete?.userId?.lastName}
-                        </span>
-                        ? This action cannot be undone.
-                      </p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
-                      <button 
-                        className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200" 
-                        onClick={() => {
-                          setShowDeleteDialog(false);
-                          setProviderToDelete(null);
-                        }}
-                      >
-                        <i className="fas fa-times mr-2"></i>
-                        Cancel
-                      </button>
-                      <button 
-                        className="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200" 
-                        onClick={handleDeleteProvider}
-                      >
-                        <i className="fas fa-trash mr-2"></i>
-                        Delete Provider
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            )}
-          </AnimatePresence>
+                    </td>
+                  </motion.tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
+
+        {/* Pagination */}
+        {!isLoading && providers.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+            <div className="flex flex-1 justify-between sm:hidden">
+              <button
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={pagination.page === 1}
+                className={`relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium ${
+                  pagination.page === 1 
+                    ? 'text-gray-300 cursor-not-allowed' 
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={pagination.page === pagination.pages}
+                className={`relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium ${
+                  pagination.page === pagination.pages 
+                    ? 'text-gray-300 cursor-not-allowed' 
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Next
+              </button>
+            </div>
+            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700">
+                  Showing <span className="font-medium">{((pagination.page - 1) * pagination.limit) + 1}</span> to{' '}
+                  <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
+                  <span className="font-medium">{pagination.total}</span> results
+                </p>
+              </div>
+              <div>
+                <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                  <button
+                    onClick={() => handlePageChange(pagination.page - 1)}
+                    disabled={pagination.page === 1}
+                    className={`relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+                      pagination.page === 1 ? 'cursor-not-allowed' : ''
+                    }`}
+                  >
+                    <span className="sr-only">Previous</span>
+                    <i className="fas fa-chevron-left h-5 w-5"></i>
+                  </button>
+                  
+                  {/* Page numbers */}
+                  {[...Array(pagination.pages).keys()].map((number) => {
+                    const pageNumber = number + 1;
+                    // Show current page, first, last, and pages around current
+                    if (
+                      pageNumber === 1 ||
+                      pageNumber === pagination.pages ||
+                      (pageNumber >= pagination.page - 1 && pageNumber <= pagination.page + 1)
+                    ) {
+                      return (
+                        <button
+                          key={pageNumber}
+                          onClick={() => handlePageChange(pageNumber)}
+                          aria-current={pagination.page === pageNumber ? 'page' : undefined}
+                          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                            pagination.page === pageNumber
+                              ? 'z-10 bg-blue-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
+                              : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      );
+                    }
+                    
+                    // Show ellipsis
+                    if (
+                      (pageNumber === 2 && pagination.page > 3) ||
+                      (pageNumber === pagination.pages - 1 && pagination.page < pagination.pages - 2)
+                    ) {
+                      return (
+                        <span
+                          key={pageNumber}
+                          className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+                    
+                    return null;
+                  })}
+                  
+                  <button
+                    onClick={() => handlePageChange(pagination.page + 1)}
+                    disabled={pagination.page === pagination.pages}
+                    className={`relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+                      pagination.page === pagination.pages ? 'cursor-not-allowed' : ''
+                    }`}
+                  >
+                    <span className="sr-only">Next</span>
+                    <i className="fas fa-chevron-right h-5 w-5"></i>
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </AdminLayout>
+
+      {/* Delete Confirmation Dialog */}
+      <AnimatePresence>
+        {showDeleteDialog && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+          >
+            <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+              <div className="mt-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium text-gray-900">Confirm Deletion</h3>
+                  <button
+                    onClick={() => setShowDeleteDialog(false)}
+                    className="text-gray-400 hover:text-gray-500"
+                  >
+                    <i className="fas fa-times"></i>
+                  </button>
+                </div>
+                
+                <div className="mt-4">
+                  <p className="text-sm text-gray-500">
+                    Are you sure you want to delete <span className="font-medium">{providerToDelete?.firstName} {providerToDelete?.lastName}</span>? 
+                    This action cannot be undone.
+                  </p>
+                </div>
+                
+                <div className="mt-6 flex justify-end space-x-3">
+                  <button
+                    onClick={() => setShowDeleteDialog(false)}
+                    className="inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteProvider}
+                    className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Quick View Modal */}
+      <AnimatePresence>
+        {showQuickView && <QuickViewModal />}
+      </AnimatePresence>
+    </div>
+    // Remove AdminLayout wrapper since it's handled by App.jsx
   );
 }
 

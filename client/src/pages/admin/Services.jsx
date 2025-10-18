@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import AdminLayout from './AdminLayout';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 
@@ -42,29 +41,29 @@ const Services = () => {
 
   if (loading) {
     return (
-      <AdminLayout title="Services Management">
+      <div>
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-      </AdminLayout>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <AdminLayout title="Services Management">
+      <div>
         <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg mb-6" role="alert">
           <div className="flex items-center">
             <i className="fas fa-exclamation-circle mr-3 text-red-500"></i>
             <p className="text-sm font-medium">{error}</p>
           </div>
         </div>
-      </AdminLayout>
+      </div>
     );
   }
 
   return (
-    <AdminLayout title="Services Management">
+    <div>
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
@@ -194,7 +193,7 @@ const Services = () => {
           </div>
         )}
       </div>
-    </AdminLayout>
+    </div>
   );
 };
 

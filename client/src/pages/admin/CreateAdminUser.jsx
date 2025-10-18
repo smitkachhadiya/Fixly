@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import AdminLayout from './AdminLayout';
 import Button from '../../components/admin/shared/Button';
 import { cardStyles, formStyles, alertStyles } from '../../components/admin/shared/adminStyles';
 
@@ -81,7 +80,6 @@ function CreateAdminUser() {
   };
 
   return (
-    <AdminLayout title="Create Admin User">
       <div className="max-w-2xl mx-auto">
         <div className={cardStyles.container}>
           <div className={cardStyles.header}>
@@ -203,7 +201,6 @@ function CreateAdminUser() {
           </div>
         </div>
       </div>
-    </AdminLayout>
   );
 }
 

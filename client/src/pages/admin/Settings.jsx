@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import AdminLayout from './AdminLayout';
 import api from '../../config/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -202,7 +201,6 @@ const Settings = () => {
   };
 
   return (
-    <AdminLayout title="System Settings">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -605,7 +603,6 @@ const Settings = () => {
           )}
         </div>
       </div>
-    </AdminLayout>
   );
 };
 

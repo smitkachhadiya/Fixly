@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import ReviewCard from "../../components/common/review";
-import Footer from "../../components/common/Footer";
+// Removed duplicate Footer import as it's handled by Layout
 import { motion } from "framer-motion";
 
 // Animated headline with multiple modern effects
@@ -365,7 +365,6 @@ const Home = () => {
         </div>
       </section>
 
-      <Footer />
     </div>
   );
 };

@@ -73,35 +73,51 @@ exports.login = asyncHandler(async (req, res) => {
     });
   }
 
-  // Check for user
-  const user = await User.findOne({ email }).select('+password');
+  try {
+    // Check for user
+    const user = await User.findOne({ email }).select('+password');
 
-  if (!user) {
-    return res.status(401).json({
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+
+    // Check if password matches
+    const isMatch = await user.matchPassword(password);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+
+    // Check if user is active
+    if (!user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'Your account has been deactivated. Please contact support.'
+      });
+    }
+
+    sendTokenResponse(user, 200, res);
+  } catch (error) {
+    console.error('Login error:', error);
+    // Handle database connection errors specifically
+    if (error.name === 'MongoNetworkError' || error.name === 'MongooseServerSelectionError') {
+      return res.status(500).json({
+        success: false,
+        message: 'Database connection error. Please try again later.'
+      });
+    }
+    
+    return res.status(500).json({
       success: false,
-      message: 'Invalid credentials'
+      message: 'Server error during login. Please try again later.'
     });
   }
-
-  // Check if password matches
-  const isMatch = await user.matchPassword(password);
-
-  if (!isMatch) {
-    return res.status(401).json({
-      success: false,
-      message: 'Invalid credentials'
-    });
-  }
-
-  // Check if user is active
-  if (!user.isActive) {
-    return res.status(401).json({
-      success: false,
-      message: 'Your account has been deactivated. Please contact support.'
-    });
-  }
-
-  sendTokenResponse(user, 200, res);
 });
 
 // @desc    Log user out / clear cookie

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import AdminLayout from './AdminLayout';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import PlaceholderImg from '../../assets/plumbing.png';
@@ -281,7 +280,6 @@ function Bookings() {
   };
 
   return (
-    <AdminLayout title="Booking Management">
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Page Header */}
@@ -1038,7 +1036,6 @@ function Bookings() {
           </AnimatePresence>
         </div>
       </div>
-    </AdminLayout>
   );
 }
 

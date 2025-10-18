@@ -3,7 +3,6 @@ import api from '../../config/api';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { uploadToCloudinary } from '../../utils/cloudinary';
-import AdminLayout from './AdminLayout';
 import { motion, AnimatePresence } from 'framer-motion';
 import ChangePasswordModal from '../auth/ChangePassword';
 
@@ -250,7 +249,6 @@ function AdminProfile() {
   // Loading skeleton
   if (loading && !profile.firstName) {
     return (
-      <AdminLayout title="My Profile">
         <div className="min-h-screen bg-gray-50 py-8">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="animate-pulse">
@@ -267,12 +265,10 @@ function AdminProfile() {
             </div>
           </div>
         </div>
-      </AdminLayout>
     );
   }
 
   return (
-    <AdminLayout title="My Profile">
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Page Header */}
@@ -654,7 +650,6 @@ function AdminProfile() {
           />
         </div>
       </div>
-    </AdminLayout>
   );
 }
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import AdminLayout from './AdminLayout';
 import Table from '../../components/admin/shared/Table';
 import Modal from '../../components/admin/shared/Modal';
 import Button from '../../components/admin/shared/Button';
@@ -661,7 +660,7 @@ function Categories() {
   };
 
   return (
-    <AdminLayout title="Category Management">
+    <div>
       {error && (
         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
           <p>{error}</p>
@@ -700,7 +699,7 @@ function Categories() {
       >
         {renderModalContent()}
       </Modal>
-    </AdminLayout>
+    </div>
   );
 }
 

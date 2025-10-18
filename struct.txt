@@ -1,0 +1,26 @@
+.
+├── Documentation
+│   └── Testing
+├── ProductDetails
+├── client
+│   ├── public
+│   └── src
+│       ├── assets
+│       ├── components
+│       ├── config
+│       ├── constants
+│       ├── context
+│       ├── pages
+│       ├── services
+│       ├── styles
+│       └── utils
+└── server
+    ├── config
+    ├── controllers
+    ├── middleware
+    ├── models
+    ├── routes
+    │   └── api
+    └── utils
+
+25 directories

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import AdminLayout from './AdminLayout';
 import Table from '../../components/admin/shared/Table';
 import Modal from '../../components/admin/shared/Modal';
 
@@ -287,7 +286,6 @@ function Complaints() {
   };
 
   return (
-    <AdminLayout title="Complaint Management">
       <div className="space-y-6">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg mb-6" role="alert">
@@ -350,7 +348,6 @@ function Complaints() {
         {renderModalContent()}
       </Modal>
       </div>
-    </AdminLayout>
   );
 }
 
