@@ -26,5 +26,15 @@ export const listingService = {
     const response = await api.delete(`/api/listings/${id}`);
     return response.data;
   },
+  
 
+  getProviderListings: async (providerId) => {
+    const response = await api.get(`/api/listings/provider/${providerId}`);
+    return response.data;
+  },
+
+  searchListings: async (query) => {
+    const response = await api.get('/api/listings/search', { params: { q: query } });
+    return response.data;
+  }
 }
