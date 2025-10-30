@@ -31,4 +31,14 @@ export const authService = {
     return response.data;
   },
 
+  getCurrentUser: async () => {
+    const response = await api.getCurrentUser();
+    return response.data;
+  },
+
+  resetPassword: async (token, password) => {
+    const response = await api.post('/api/auth/reset-password', { token, password });
+    return response.data;
+  }
+
 }
