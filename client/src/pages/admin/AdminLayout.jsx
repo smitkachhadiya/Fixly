@@ -25,6 +25,11 @@ const AdminLayout = ({ children }) => {
     return (location.pathname === path || location.pathname.startsWith(path + '/')) ? 'active' : '';
   };
 
+  const handleLogout = () => {
+    logout();
+    window.location.href = '/login';
+  };
+
   const toggleSidebar = () => {
     if (window.innerWidth < 1024) {
       // Mobile: toggle mobile menu
