@@ -15,5 +15,15 @@ export const authService = {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userData');
   },
+ 
+  changePassword: async (passwordData) => {
+    const response = await api.put('/api/auth/changepassword', passwordData);
+    return response.data;
+  },
+
+  forgotPassword: async (email) => {
+    const response = await api.post('/api/auth/forgot-password', { email });
+    return response.data;
+  },
 
 }
