@@ -15,4 +15,16 @@ export const listingService = {
     const response = await api.post('/api/listings', listingData);
     return response.data;
   },
+
+  
+  updateListing: async (id, listingData) => {
+    const response = await api.put(`/api/listings/${id}`, listingData);
+    return response.data;
+  },
+
+  deleteListing: async (id) => {
+    const response = await api.delete(`/api/listings/${id}`);
+    return response.data;
+  },
+
 }
