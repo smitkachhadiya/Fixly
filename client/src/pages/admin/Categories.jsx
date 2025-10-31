@@ -28,7 +28,81 @@ function Categories() {
   const [pagination, setPagination] = useState({ page: 1, total: 0, limit: 10 });
   const { token } = useAuth();
 
-  
+  useEffect(() => {
+    fetchCategories();
+  }, [token, pagination.page, sortConfig]);
+
+  const fetchCategories = async () => {
+    setIsLoading(true);
+    try {
+      // Build query parameters
+      let queryParams = `page=${pagination.page}&limit=${pagination.limit}`;
+
+      // Add sorting parameters
+      if (sortConfig.key && sortConfig.direction) {
+        queryParams += `&sort=${sortConfig.key}&order=${sortConfig.direction}`;
+      }
+
+      console.log('Fetching categories with params:', queryParams);
+
+      const response = await axios.get(
+        `/api/categories?${queryParams}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      console.log('Categories response:', response.data);
+
+      // Process categories to fix image URLs and get service counts
+      const categoriesWithCounts = await Promise.all(
+        response.data.data.map(async (category) => {
+          try {
+            // Get count of services in this category
+            const servicesResponse = await axios.get(
+              `/api/listings?category=${category._id}&limit=1`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            // Fix image URL if needed
+            let processedCategory = { ...category };
+
+            // Check if the image URL is relative and needs to be fixed
+            if (category.categoryImage && !category.categoryImage.startsWith('http')) {
+              // Make sure it's a valid path
+              if (category.categoryImage.startsWith('/')) {
+                const apiUrl = '';
+                processedCategory.categoryImage = `${apiUrl}${category.categoryImage}`;
+              } else {
+                processedCategory.categoryImage = `${''}/${category.categoryImage}`;
+              }
+            }
+
+            return {
+              ...processedCategory,
+              serviceCount: servicesResponse.data.pagination?.total || 0
+            };
+          } catch (err) {
+            console.error(`Error processing category ${category._id}:`, err);
+            return { ...category, serviceCount: 0 };
+          }
+        })
+      );
+
+      setCategories(categoriesWithCounts || []);
+      setPagination(prev => ({
+        ...prev,
+        total: response.data.total || 0,
+        pages: response.data.pages || 1
+      }));
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+      setError('Failed to load categories. Please try again.');
+      toast.error('Failed to load categories');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Handle sorting
   const handleSort = (key) => {
