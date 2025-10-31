@@ -14,7 +14,42 @@ function EditListing() {
   });
   const [error, setError] = useState('');
 
- 
+  useEffect(() => {
+    const fetchListing = async () => {
+      try {
+        const response = await axios.get(`/api/listings/${id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
+        });
+        const listing = response.data.data;
+        setFormData({
+          serviceTitle: listing.serviceTitle,
+          servicePrice: listing.servicePrice,
+          serviceDetails: listing.serviceDetails,
+          tags: listing.tags.join(','),
+          isActive: listing.isActive
+        });
+      } catch (err) {
+        setError('Error fetching listing details');
+      }
+    };
+
+    fetchListing();
+  }, [id]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.put(`/api/listings/${id}`, formData, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
+      });
+      
+      if (response.data.success) {
+        navigate('/provider/dashboard');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Error updating listing');
+    }
+  };
 
   return (
     <div className="edit-listing">
