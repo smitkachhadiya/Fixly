@@ -31,7 +31,117 @@ function ProviderProfile() {
   const navigate = useNavigate();
   const { token, logout } = useAuth();
 
-  
+   useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        let userData = null;
+
+        if (id) {
+          // Fetching another provider's profile
+          setIsOwnProfile(false);
+
+          // Get provider data by ID
+          const providerResponse = await api.get(`/api/providers/${id}`);
+          console.log('Provider data from API:', providerResponse.data);
+
+          if (providerResponse.data.success) {
+            userData = providerResponse.data.data;
+
+            // Also fetch services by this provider
+            try {
+              // Use the correct endpoint for fetching services by provider ID
+              const servicesResponse = await api.get(`/api/listings/provider/${id}`);
+              console.log('Provider services from API:', servicesResponse.data);
+              if (servicesResponse.data.success) {
+                setServices(servicesResponse.data.data);
+              }
+            } catch (err) {
+              console.error('Error fetching provider services:', err);
+            }
+          } else {
+            throw new Error('Provider not found');
+          }
+        } else {
+          // Fetching own profile
+          setIsOwnProfile(true);
+
+          // First, check if we have user data in localStorage
+          const cachedUserData = localStorage.getItem('userData');
+
+          if (cachedUserData) {
+            userData = JSON.parse(cachedUserData);
+            console.log('Using cached user data:', userData);
+
+            // Set profile from cached data while we fetch the latest
+            setProfile({
+              firstName: userData.firstName || '',
+              lastName: userData.lastName || '',
+              email: userData.email || '',
+              phone: userData.phone || '',
+              businessName: userData.businessName || '',
+              businessAddress: userData.address || '',
+              description: userData.description || '',
+              profilePicture: userData.profilePicture || '',
+              verificationStatus: userData.verificationStatus || userData.isVerified ? 'verified' : 'pending'
+            });
+          }
+
+          // Get fresh user data from the auth endpoint using cached API
+          const userResponse = await api.getCurrentUser();
+
+          console.log('Fresh user data from API:', userResponse.data);
+          userData = userResponse.data.data || userResponse.data;
+
+          // Store the user data in localStorage for persistence
+          localStorage.setItem('userData', JSON.stringify(userData));
+        }
+
+        // Extract all necessary information from the user data
+        if (id) {
+          // For public provider profile
+          setProfile(userData);
+        } else {
+          // For own profile
+          setProfile({
+            firstName: userData.firstName || '',
+            lastName: userData.lastName || '',
+            email: userData.email || '',
+            phone: userData.phone || '',
+            businessName: userData.businessName || '',
+            businessAddress: userData.address || '',
+            description: userData.description || '',
+            profilePicture: userData.profilePicture || '',
+            // Check if verification status is available in user data
+            verificationStatus: userData.verificationStatus || userData.isVerified ? 'verified' : 'pending'
+          });
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error('Profile fetch error:', err);
+        if (err.response?.status === 401) {
+          logout();
+          navigate('/login');
+        }
+        setError('Failed to load profile');
+        setLoading(false);
+      }
+    };
+
+
+
+    if (id) {
+      // We can fetch other provider profiles without being logged in
+      fetchProfile();
+    } else if (token) {
+      // For own profile, we need to be logged in
+      fetchProfile();
+    } else {
+      navigate('/login');
+    }
+  }, [token, navigate, logout]);
+
   const handleProfileImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
