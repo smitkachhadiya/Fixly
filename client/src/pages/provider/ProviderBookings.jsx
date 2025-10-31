@@ -19,7 +19,27 @@ function ProviderBookings() {
   
   const { token } = useAuth();
 
-  
+  useEffect(() => {
+    const fetchBookings = async () => {
+      setIsLoading(true);
+      try {
+        // Use the correct API endpoint for both development and production
+        const response = await axios.get('/api/bookings/provider', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setBookings(response.data.data || []);
+      } catch (err) {
+        console.error('Error fetching bookings:', err);
+        setError('Failed to load bookings. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (token) {
+      fetchBookings();
+    }
+  }, [token]);
 
   const handleViewDetails = (booking) => {
     setSelectedBooking(booking);
@@ -31,7 +51,45 @@ function ProviderBookings() {
     setSelectedBooking(null);
   };
 
- 
+  const handleUpdateStatus = async (bookingId, newStatus) => {
+    setStatusUpdateLoading(true);
+    setStatusMessage({ type: '', message: '' });
+
+    try {
+      await axios.put(`/api/bookings/${bookingId}/status`, {
+        status: newStatus
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // Update local state
+      setBookings(bookings.map(booking =>
+        booking._id === bookingId
+          ? { ...booking, bookingStatus: newStatus }
+          : booking
+      ));
+
+      setStatusMessage({
+        type: 'success',
+        message: `Booking status updated to ${newStatus} successfully!`
+      });
+
+      // Close modal if open
+      if (isModalOpen && selectedBooking?._id === bookingId) {
+        setTimeout(() => {
+          closeModal();
+        }, 2000);
+      }
+    } catch (err) {
+      console.error('Error updating booking status:', err);
+      setStatusMessage({
+        type: 'error',
+        message: 'Failed to update booking status. Please try again.'
+      });
+    } finally {
+      setStatusUpdateLoading(false);
+    }
+  };
 
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
