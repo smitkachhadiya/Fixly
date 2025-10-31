@@ -25,7 +25,24 @@ function AddService() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch categories from the backend
- 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(process.env.NODE_ENV === 'production' ? '' : '/api/categories');
+        if (response.data.success) {
+          setCategories(response.data.data);
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        setError('Failed to load categories. Please refresh the page.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -61,7 +78,60 @@ function AddService() {
     });
   };
 
-  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Validation
+    if (!formData.serviceTitle.trim()) {
+      setError('Service title is required');
+      return;
+    }
+    if (!formData.categoryId) {
+      setError('Please select a category');
+      return;
+    }
+    if (!formData.serviceDetails.trim()) {
+      setError('Service description is required');
+      return;
+    }
+    if (!formData.servicePrice || isNaN(formData.servicePrice) || Number(formData.servicePrice) <= 0) {
+      setError('Please enter a valid price');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      // Create form data for file upload
+      const serviceData = new FormData();
+      serviceData.append('serviceTitle', formData.serviceTitle);
+      serviceData.append('categoryId', formData.categoryId);
+      serviceData.append('serviceDetails', formData.serviceDetails);
+      serviceData.append('servicePrice', formData.servicePrice);
+      serviceData.append('duration', formData.duration);
+      serviceData.append('serviceLocation', formData.serviceLocation);
+
+      // Append each image - only use the first image for now
+      if (formData.serviceImages.length > 0) {
+        serviceData.append('serviceImage', formData.serviceImages[0]);
+      }
+
+      await axios.post(process.env.NODE_ENV === 'production' ? '' : '/api/listings', serviceData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      navigate('/provider/services');
+    } catch (err) {
+      console.error('Error adding service:', err);
+      setError(err.response?.data?.message || 'Failed to add service. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <ProviderLayout>
