@@ -12,6 +12,7 @@ const {
 } = require('../../controllers/adminController');
 
 const adminListingsRoutes = require('./adminListings');
+const settingsRoutes = require('./settings');
 const { protect, authorize } = require('../../middleware/auth');
 
 const router = express.Router();
@@ -32,6 +33,9 @@ router.get('/earnings', protect, authorize('admin'), getAllEarnings);
 router.get('/earnings/summary', protect, authorize('admin'), getEarningsSummary);
 router.get('/earnings/:id', protect, authorize('admin'), getEarningsById);
 router.put('/earnings/:id', protect, authorize('admin'), updateEarnings);
+
+// Settings routes
+router.use('/settings', settingsRoutes);
 
 // Mount admin listings routes
 router.use('/listings', adminListingsRoutes);

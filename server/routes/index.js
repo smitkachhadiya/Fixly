@@ -11,6 +11,8 @@ const complaintRoutes = require('./api/complaints');
 const reportRoutes = require('./api/reports');
 const commissionRoutes = require('./api/commissions');
 const adminRoutes = require('./api/admin');
+const specificReportRoutes = require('./api/specificReports');
+const settingsRoutes = require('./api/settings');
 
 const router = express.Router();
 
@@ -26,6 +28,8 @@ router.use('/api/reviews', reviewRoutes);
 router.use('/api/complaints', complaintRoutes);
 router.use('/api/reports', reportRoutes);
 router.use('/api/commissions', commissionRoutes);
+router.use('/api/specific-reports', specificReportRoutes);
+router.use('/api/settings', settingsRoutes);
 router.use('/api/admin', adminRoutes);
 
 module.exports = router;
