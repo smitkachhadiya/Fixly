@@ -1,7 +1,7 @@
 const request = require('supertest');
 const app = require('../server');
 const ServiceCategory = require('../models/ServiceCategory');
-const User = require('../models/User');
+const User = require('../models/Users');
 const mongoose = require('mongoose');
 
 // Mock Cloudinary

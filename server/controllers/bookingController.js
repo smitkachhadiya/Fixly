@@ -1,7 +1,7 @@
 const Booking = require('../models/Booking');
 const ServiceListing = require('../models/ServiceListing');
 const ServiceProvider = require('../models/ServiceProvider');
-const User = require('../models/User');
+const User = require('../models/Users');
 const asyncHandler = require('../utils/asyncHandler');
 
 // @desc    Create a new booking

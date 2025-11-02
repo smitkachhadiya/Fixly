@@ -1,6 +1,6 @@
 const ServiceProvider = require('../models/ServiceProvider');
 const ServiceListing = require('../models/ServiceListing');
-const User = require('../models/User');
+const User = require('../models/Users');
 const asyncHandler = require('../utils/asyncHandler');
 const { cloudinary } = require('../config/cloudinary');
 

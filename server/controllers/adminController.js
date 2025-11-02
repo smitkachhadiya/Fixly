@@ -1,5 +1,5 @@
 const ServiceProvider = require('../models/ServiceProvider');
-const User = require('../models/User');
+const User = require('../models/Users');
 const ServiceListing = require('../models/ServiceListing');
 const Booking = require('../models/Booking');
 const Complaint = require('../models/Complaint');
