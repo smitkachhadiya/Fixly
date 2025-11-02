@@ -6,19 +6,35 @@ const ServiceProvider = require('../../models/ServiceProvider'); // needed for c
 let mongoServer;
 
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
+  // Increase timeout for MongoDB memory server creation
+  jest.setTimeout(15000);
+  
+  mongoServer = await MongoMemoryServer.create({
+    instance: {
+      port: 27018, // Use a different port to avoid conflicts
+    }
+  });
   const uri = mongoServer.getUri();
-  await mongoose.connect(uri);
-});
+  await mongoose.connect(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+}, 15000); // Increase timeout to 15 seconds
 
 afterAll(async () => {
   await mongoose.disconnect();
-  await mongoServer.stop();
+  if (mongoServer) {
+    await mongoServer.stop();
+  }
 });
 
 afterEach(async () => {
-  await Booking.deleteMany();
-  await ServiceProvider.deleteMany();
+  // Clear database collections after each test
+  const collections = mongoose.connection.collections;
+  for (const key in collections) {
+    const collection = collections[key];
+    await collection.deleteMany({});
+  }
 });
 
 describe('Booking Model', () => {
@@ -44,7 +60,7 @@ describe('Booking Model', () => {
     expect(saved.commissionAmount).toBe(100); // 10% default
     expect(saved.providerEarning).toBe(900);
     expect(saved.commissionPaid).toBe(false); // default
-  });
+  }, 10000); // Increase timeout for this test
 
   it('should fail validation if required fields are missing', async () => {
     const booking = new Booking({});
@@ -84,7 +100,7 @@ describe('Booking Model', () => {
     expect(saved.providerEarning).toBe(450);
     expect(saved.commissionPaid).toBe(false);
     expect(saved.bookingDateTime).toBeDefined();
-  });
+  }, 10000); // Increase timeout for this test
 
   it('should fail if specialInstructions exceed 500 characters', async () => {
     const provider = await ServiceProvider.create({
@@ -130,5 +146,5 @@ describe('Booking Model', () => {
 
     expect(booking.commissionAmount).toBe(400); // 20%
     expect(booking.providerEarning).toBe(1600);
-  });
+  }, 10000); // Increase timeout for this test
 });

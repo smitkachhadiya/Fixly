@@ -7,20 +7,35 @@ const ServiceProvider = require('../../models/ServiceProvider');
 let mongoServer;
 
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
+  // Increase timeout for MongoDB memory server creation
+  jest.setTimeout(15000);
+  
+  mongoServer = await MongoMemoryServer.create({
+    instance: {
+      port: 27020, // Use a different port to avoid conflicts
+    }
+  });
   const uri = mongoServer.getUri();
-  await mongoose.connect(uri);
-});
+  await mongoose.connect(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+}, 15000); // Increase timeout to 15 seconds
 
 afterAll(async () => {
   await mongoose.disconnect();
-  await mongoServer.stop();
+  if (mongoServer) {
+    await mongoServer.stop();
+  }
 });
 
 afterEach(async () => {
-  await Commission.deleteMany();
-  await Booking.deleteMany();
-  await ServiceProvider.deleteMany();
+  // Clear database collections after each test
+  const collections = mongoose.connection.collections;
+  for (const key in collections) {
+    const collection = collections[key];
+    await collection.deleteMany({});
+  }
 });
 
 describe('Commission Model', () => {
@@ -51,7 +66,7 @@ describe('Commission Model', () => {
     expect(commission.status).toBe('Pending'); // default
     expect(commission.amount).toBe(100);
     expect(commission.rate).toBe(10);
-  });
+  }, 10000); // Increase timeout for this test
 
   it('should fail validation if required fields are missing', async () => {
     const commission = new Commission({});
