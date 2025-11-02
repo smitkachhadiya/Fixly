@@ -44,10 +44,19 @@ function ServiceDetails() {
         const response = await api.get(`/api/listings/${id}`);
         setListing(response.data.data);
 
-        // Fix: Check if images exists and is an array before spreading
-        const serviceImages = response.data.data.serviceImage
-          ? [response.data.data.serviceImage, ...(Array.isArray(response.data.data.images) ? response.data.data.images : [])]
-          : [''];
+        // Fix: Properly handle images array
+        const serviceImages = [];
+        if (response.data.data.serviceImage) {
+          serviceImages.push(response.data.data.serviceImage);
+        }
+        if (Array.isArray(response.data.data.images)) {
+          serviceImages.push(...response.data.data.images);
+        }
+
+        // Ensure we always have at least one image (placeholder)
+        if (serviceImages.length === 0) {
+          serviceImages.push('');
+        }
 
         setImages(serviceImages);
 

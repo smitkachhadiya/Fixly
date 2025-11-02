@@ -63,7 +63,7 @@ function Navbar() {
   };
 
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-50 border-b border-[#babfbc]">
+    <nav className="bg-white shadow-sm fixed top-0 left-0 right-0 z-50 border-b border-[#babfbc]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
@@ -141,110 +141,110 @@ function Navbar() {
         </div>
       </div>
 
-  {/* Mobile Menu */}
-{isMenuOpen && (
-  <div className="md:hidden bg-white border-t border-[#babfbc]">
-    <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-      <Link 
-        to="/" 
-        className={`block px-3 py-2 rounded-md text-base font-medium ${location.pathname === '/' ? 'text-[#50B498] bg-[#ebf2f3] font-semibold' : 'text-[#0b0e11] hover:text-[#50B498] hover:bg-[#ebf2f3]'}`}
-        onClick={() => setIsMenuOpen(false)}
-      >
-        Home
-      </Link>
-      <Link 
-        to="/services" 
-        className={`block px-3 py-2 rounded-md text-base font-medium ${location.pathname === '/services' ? 'text-[#50B498] bg-[#ebf2f3] font-semibold' : 'text-[#0b0e11] hover:text-[#50B498] hover:bg-[#ebf2f3]'}`}
-        onClick={() => setIsMenuOpen(false)}
-      >
-        Services
-      </Link>
-      <Link 
-        to="/about" 
-        className={`block px-3 py-2 rounded-md text-base font-medium ${location.pathname === '/about' ? 'text-[#50B498] bg-[#ebf2f3] font-semibold' : 'text-[#0b0e11] hover:text-[#50B498] hover:bg-[#ebf2f3]'}`}
-        onClick={() => setIsMenuOpen(false)}
-      >
-        About
-      </Link>
-      <Link 
-        to="/contact" 
-        className={`block px-3 py-2 rounded-md text-base font-medium ${location.pathname === '/contact' ? 'text-[#50B498] bg-[#ebf2f3] font-semibold' : 'text-[#0b0e11] hover:text-[#50B498] hover:bg-[#ebf2f3]'}`}
-        onClick={() => setIsMenuOpen(false)}
-      >
-        Contact
-      </Link>
-      {isAuthenticated && (
-        <Link 
-          to="/bookings" 
-          className={`block px-3 py-2 rounded-md text-base font-medium flex items-center ${location.pathname === '/bookings' ? 'text-[#50B498] bg-[#ebf2f3] font-semibold' : 'text-[#0b0e11] hover:text-[#50B498] hover:bg-[#ebf2f3]'}`}
-          onClick={() => setIsMenuOpen(false)}
-        >
-          <i className="fas fa-calendar-alt mr-2"></i> My Bookings
-        </Link>
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <div className="md:hidden bg-white border-t border-[#babfbc]">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            <Link 
+              to="/" 
+              className={`block px-3 py-2 rounded-md text-base font-medium ${location.pathname === '/' ? 'text-[#50B498] bg-[#ebf2f3] font-semibold' : 'text-[#0b0e11] hover:text-[#50B498] hover:bg-[#ebf2f3]'}`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Home
+            </Link>
+            <Link 
+              to="/services" 
+              className={`block px-3 py-2 rounded-md text-base font-medium ${location.pathname === '/services' ? 'text-[#50B498] bg-[#ebf2f3] font-semibold' : 'text-[#0b0e11] hover:text-[#50B498] hover:bg-[#ebf2f3]'}`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Services
+            </Link>
+            <Link 
+              to="/about" 
+              className={`block px-3 py-2 rounded-md text-base font-medium ${location.pathname === '/about' ? 'text-[#50B498] bg-[#ebf2f3] font-semibold' : 'text-[#0b0e11] hover:text-[#50B498] hover:bg-[#ebf2f3]'}`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              About
+            </Link>
+            <Link 
+              to="/contact" 
+              className={`block px-3 py-2 rounded-md text-base font-medium ${location.pathname === '/contact' ? 'text-[#50B498] bg-[#ebf2f3] font-semibold' : 'text-[#0b0e11] hover:text-[#50B498] hover:bg-[#ebf2f3]'}`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Contact
+            </Link>
+            {isAuthenticated && (
+              <Link 
+                to="/bookings" 
+                className={`block px-3 py-2 rounded-md text-base font-medium flex items-center ${location.pathname === '/bookings' ? 'text-[#50B498] bg-[#ebf2f3] font-semibold' : 'text-[#0b0e11] hover:text-[#50B498] hover:bg-[#ebf2f3]'}`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <i className="fas fa-calendar-alt mr-2"></i> My Bookings
+              </Link>
+            )}
+          </div>
+          
+          {/* Mobile Auth Buttons */}
+          <div className="pt-4 pb-3 border-t border-[#babfbc]">
+            <div className="flex flex-col space-y-3 px-4">
+              {isAuthenticated ? (
+                <>
+                  {userType === 'service_provider' ? (
+                    <Link 
+                      to="/provider/dashboard" 
+                      className="px-4 py-2 text-base font-medium text-white text-center bg-gradient-to-r from-[#50B498] to-[#468585] rounded-md hover:from-[#468585] hover:to-[#50B498] transition-all duration-300 shadow-md"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Dashboard
+                    </Link>
+                  ) : userType === 'admin' ? (
+                    <Link 
+                      to="/admin" 
+                      className="px-4 py-2 text-base font-medium text-white text-center bg-gradient-to-r from-[#50B498] to-[#468585] rounded-md hover:from-[#468585] hover:to-[#50B498] transition-all duration-300 shadow-md"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Admin Dashboard
+                    </Link>
+                  ) : userType === 'user' ? (
+                    <Link 
+                      to="/profile" 
+                      className="px-4 py-2 text-base font-medium text-white text-center bg-gradient-to-r from-[#50B498] to-[#468585] rounded-md hover:from-[#468585] hover:to-[#50B498] transition-all duration-300 shadow-md"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      My Profile
+                    </Link>
+                  ) : null}
+                  <button 
+                    onClick={handleLogout} 
+                    className="px-4 py-2 text-base font-medium text-[#0b0e11] text-center bg-gradient-to-r from-[#DEF9C4] to-[#9CDBA6] rounded-md hover:from-[#9CDBA6] hover:to-[#50B498] transition-colors duration-300"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link 
+                    to="/login" 
+                    className="px-4 py-2 text-base font-medium text-center text-[#0b0e11] hover:text-[#50B498] transition-colors duration-300"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                  <Link 
+                    to="/signup" 
+                    className="px-4 py-2 text-base font-medium text-white text-center bg-gradient-to-r from-[#50B498] to-[#468585] rounded-md hover:from-[#468585] hover:to-[#50B498] transition-all duration-300 shadow-md"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       )}
-    </div>
-    
-    {/* Mobile Auth Buttons */}
-    <div className="pt-4 pb-3 border-t border-[#babfbc]">
-      <div className="flex flex-col space-y-3 px-4">
-        {isAuthenticated ? (
-          <>
-            {userType === 'service_provider' ? (
-              <Link 
-                to="/provider/dashboard" 
-                className="px-4 py-2 text-base font-medium text-white text-center bg-gradient-to-r from-[#50B498] to-[#468585] rounded-md hover:from-[#468585] hover:to-[#50B498] transition-all duration-300 shadow-md"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Dashboard
-              </Link>
-            ) : userType === 'admin' ? (
-              <Link 
-                to="/admin" 
-                className="px-4 py-2 text-base font-medium text-white text-center bg-gradient-to-r from-[#50B498] to-[#468585] rounded-md hover:from-[#468585] hover:to-[#50B498] transition-all duration-300 shadow-md"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Admin Dashboard
-              </Link>
-            ) : userType === 'user' ? (
-              <Link 
-                to="/profile" 
-                className="px-4 py-2 text-base font-medium text-white text-center bg-gradient-to-r from-[#50B498] to-[#468585] rounded-md hover:from-[#468585] hover:to-[#50B498] transition-all duration-300 shadow-md"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                My Profile
-              </Link>
-            ) : null}
-            <button 
-              onClick={handleLogout} 
-              className="px-4 py-2 text-base font-medium text-[#0b0e11] text-center bg-gradient-to-r from-[#DEF9C4] to-[#9CDBA6] rounded-md hover:from-[#9CDBA6] hover:to-[#50B498] transition-colors duration-300"
-            >
-              Logout
-            </button>
-          </>
-        ) : (
-          <>
-            <Link 
-              to="/login" 
-              className="px-4 py-2 text-base font-medium text-center text-[#0b0e11] hover:text-[#50B498] transition-colors duration-300"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Login
-            </Link>
-            <Link 
-              to="/signup" 
-              className="px-4 py-2 text-base font-medium text-white text-center bg-gradient-to-r from-[#50B498] to-[#468585] rounded-md hover:from-[#468585] hover:to-[#50B498] transition-all duration-300 shadow-md"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Sign Up
-            </Link>
-          </>
-        )}
-      </div>
-    </div>
-  </div>
-)}
-</nav>
-);
+    </nav>
+  );
 }
 
 export default Navbar;

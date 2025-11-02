@@ -6,7 +6,7 @@ const Layout = ({ children, hideNavbar = false, hideFooter = false }) => {
   return (
     <div className="flex flex-col min-h-screen">
       {!hideNavbar && <Navbar />}
-      <main className="flex-grow">
+      <main className="flex-grow pt-16">
         {children}
       </main>
       {!hideFooter && <Footer />}
