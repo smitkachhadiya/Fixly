@@ -20,6 +20,11 @@ const ServiceCategorySchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  parentCategory: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ServiceCategory',
+    default: null
   }
 }, { timestamps: true });
 

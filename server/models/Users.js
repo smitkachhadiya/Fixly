@@ -50,25 +50,15 @@ const UserSchema = new mongoose.Schema({
     default: ''
   },
   address: {
-    street: {
-      type: String,
-      default: ''
-    },
-    city: {
-      type: String,
-      default: ''
-    },
-    state: {
-      type: String,
-      default: ''
-    },
-    zipCode: {
-      type: String,
-      default: ''
-    },
-    country: {
-      type: String,
-      default: ''
+    type: Object,
+    default: function() {
+      return {
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: ''
+      };
     }
   },
   resetPasswordToken: String,
@@ -116,9 +106,19 @@ UserSchema.methods.getResetPasswordToken = function() {
     .update(resetToken)
     .digest('hex');
 
-  // Set expire
-  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+  // Set expire (15 minutes to account for potential timing differences)
+  this.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
 
+  // Ensure address is an object
+  if (typeof this.address === 'string' || this.address === null) {
+    this.address = {
+      street: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: ''
+    };
+  }
   return resetToken;
 };
 
