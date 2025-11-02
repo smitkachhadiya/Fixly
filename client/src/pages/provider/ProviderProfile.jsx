@@ -5,7 +5,6 @@ import { useAuth } from '../../context/AuthContext';
 import { uploadToCloudinary } from '../../utils/cloudinary';
 import ProviderLayout from './ProviderLayout';
 import ChangePasswordModal from '../auth/ChangePassword';
-import Navbar from '../../components/common/Navbar';
 // Remove the CSS import since we'll use Tailwind classes
 // import './ProviderProfile.css';
 

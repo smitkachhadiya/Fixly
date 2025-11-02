@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import Navbar from "../../components/common/Navbar";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../config/api";
 import { motion } from "framer-motion";
@@ -72,7 +71,7 @@ function Login() {
 
   return (
     <div className="min-h-screen bg-[#ebf2f3]">
-      <Navbar />
+      
 
       <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] px-4 py-12">
         <motion.div

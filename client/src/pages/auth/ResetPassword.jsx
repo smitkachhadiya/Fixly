@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import Navbar from '../../components/common/Navbar';
 import api from '../../config/api';
 import { motion } from 'framer-motion';
 import Button from '../../components/common/Button';
@@ -53,8 +52,7 @@ function ResetPassword() {
 
   return (
     <div className="min-h-screen bg-[#ebf2f3]">
-      <Navbar />
-
+  
       <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] px-4 py-12">
         <motion.div
           className="w-full max-w-md"

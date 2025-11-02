@@ -1,6 +1,5 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import Navbar from "../../components/common/Navbar";
 import { motion } from "framer-motion";
 
 function AuthChoice() {
@@ -8,7 +7,7 @@ function AuthChoice() {
 
   return (
     <div className="min-h-screen bg-[#ebf2f3]">
-      <Navbar />
+     
       <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] py-12 px-4 sm:px-6 lg:px-8">
         <motion.div
           className="max-w-md w-full"

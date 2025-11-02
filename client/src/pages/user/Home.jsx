@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import ReviewCard from "../../components/common/review";
-import Navbar from "../../components/common/Navbar";
 import Footer from "../../components/common/Footer";
 import { motion } from "framer-motion";
 
@@ -151,9 +150,8 @@ const Home = () => {
   };
 
   return (
+   
     <div className="w-full bg-[#ebf2f3] text-[#0b0e11] overflow-x-hidden font-sans">
-      <Navbar />
-
       {/* Hero Section */}
       <div className="w-full min-h-screen text-center overflow-hidden relative bg-[#ebf2f3]">
         <style>
@@ -367,7 +365,7 @@ const Home = () => {
         </div>
       </section>
 
-      <Footer />
+      
     </div>
   );
 };

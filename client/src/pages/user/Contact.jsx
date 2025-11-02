@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../../components/common/Navbar';
 import Footer from '../../components/common/Footer';
 import { motion } from 'framer-motion';
 import Card from '../../components/common/Card';
@@ -43,7 +42,6 @@ const Contact = () => {
 
   return (
     <>
-      <Navbar />
       <main className="min-h-screen bg-[#ebf2f3]">
         {/* Hero Section */}
         <div className="relative overflow-hidden bg-[#45573a] text-white">

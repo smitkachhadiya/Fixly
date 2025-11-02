@@ -145,7 +145,6 @@
 import React, { useEffect, useState } from "react";
 import api from "../../config/api";
 import { Link, useNavigate } from "react-router-dom";
-import Navbar from "./Navbar";
 
 export default function JobListing() {
   const navigate = useNavigate();
@@ -192,7 +191,6 @@ export default function JobListing() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
       
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../config/api';
 import { uploadToCloudinary } from '../../utils/cloudinary';
-import Navbar from './Navbar';
 
 const Tasker = () => {
   const [formData, setFormData] = useState({
@@ -175,7 +174,6 @@ const Tasker = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Navbar />
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center mb-8">

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../config/api';
-import Navbar from '../../components/common/Navbar';
 
 function BookingDetails() {
   const { id } = useParams();
@@ -34,7 +33,6 @@ function BookingDetails() {
   if (!booking) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
         <div className="max-w-4xl mx-auto px-4 py-8">
           <div className="flex items-center justify-center py-12">
             <i className="fas fa-spinner fa-spin text-3xl text-blue-600 mr-3"></i>
@@ -47,7 +45,6 @@ function BookingDetails() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-6">
           <button 

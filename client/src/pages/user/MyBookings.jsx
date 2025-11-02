@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../config/api';
-import Navbar from '../../components/common/Navbar';
 import { useAuth } from '../../context/AuthContext';
 import PlaceholderImg from '../../assets/plumbing.png';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 
-function MyBookings({ hideNavbar = false }) {
+function MyBookings() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
@@ -79,7 +78,6 @@ function MyBookings({ hideNavbar = false }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        {!hideNavbar && <Navbar />}
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex flex-col items-center justify-center py-12 bg-white rounded-xl shadow-md">
             <i className="fas fa-spinner fa-spin text-3xl text-blue-600 mb-4"></i>
@@ -92,7 +90,6 @@ function MyBookings({ hideNavbar = false }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {!hideNavbar && <Navbar />}
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">

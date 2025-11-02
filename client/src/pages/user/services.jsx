@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import Navbar from "../../components/common/Navbar";
 import { useAuth } from "../../context/AuthContext";
 import PlaceholderImg from "../../assets/plumbing.png";
 import { motion, AnimatePresence } from "framer-motion";
@@ -593,7 +592,7 @@ const Services = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#DEF9C4] to-[#9CDBA6]">
-      <Navbar />
+   
 
       {/* Hero Section with Search */}
       <section className="relative py-20 px-4">

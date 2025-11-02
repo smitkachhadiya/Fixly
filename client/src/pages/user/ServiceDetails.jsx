@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../config/api';
-import Navbar from '../../components/common/Navbar';
 import { useAuth } from '../../context/AuthContext';
 import ImageGallery from '../../components/service-details/ImageGallery';
 import ServiceHeader from '../../components/service-details/ServiceHeader';
@@ -185,7 +184,6 @@ function ServiceDetails() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col items-center justify-center min-h-[300px] text-center">
             <div className="mb-4">
@@ -201,7 +199,7 @@ function ServiceDetails() {
   if (error || !listing) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
+      
         <div className="container mx-auto px-4 py-8">
           <div className="bg-red-50 border-l-4 border-red-500 rounded-lg p-8 max-w-2xl mx-auto text-center shadow-md">
             <i className="fas fa-exclamation-circle text-red-500 text-5xl mb-4"></i>
@@ -220,7 +218,7 @@ function ServiceDetails() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
+      
       {bookingSuccess && (
         <div className="fixed top-4 right-4 bg-green-500 text-white rounded-lg shadow-lg p-4 flex items-start z-50 animate-fade-in">
           <i className="fas fa-check-circle text-xl mr-2"></i>
