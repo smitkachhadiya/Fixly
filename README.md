@@ -90,7 +90,9 @@ Fixly operates as a two-sided marketplace where customers can discover, book, an
 - **Database Hosting**: MongoDB Atlas
 - **Image Storage**: Cloudinary
 - **Email Service**: SMTP-compatible email providers
-- **Deployment**: Platform-agnostic (can be deployed on any cloud provider)
+- **Frontend Deployment**: Vercel
+- **Backend Deployment**: Render (Docker)
+- **Deployment Configuration**: See [DEPLOYMENT_INSTRUCTIONS.md](DEPLOYMENT_INSTRUCTIONS.md) for detailed deployment guides
 
 ## Sprint: Cloudinary Image Management
 This branch contains the implementation of Cloudinary image management functionality as part of sprint tasks #62-#68.

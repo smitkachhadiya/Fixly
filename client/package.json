@@ -8,8 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "vercel-build": "vite build",
-    "client:start": "npx vite"
+    "vercel-build": "vite build"
   },
   "dependencies": {
     "@babel/helpers": "^7.23.0",
