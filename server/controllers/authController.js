@@ -24,7 +24,8 @@ exports.register = asyncHandler(async (req, res) => {
   console.log('Registration request received with data:', {
     userType, firstName, lastName, email,
     hasProfilePicture: !!profilePicture,
-    profilePictureUrl: profilePicture
+    profilePictureUrl: profilePicture,
+    address
   });
 
   // Create user
@@ -36,9 +37,29 @@ exports.register = asyncHandler(async (req, res) => {
       firstName,
       lastName,
       email,
-      phone,
-      address
+      phone
     };
+
+    // Handle address field properly
+    if (address && typeof address === 'object') {
+      // Ensure all address fields are strings
+      userData.address = {
+        street: address.street || '',
+        city: address.city || '',
+        state: address.state || '',
+        zipCode: address.zipCode || '',
+        country: address.country || ''
+      };
+    } else {
+      // Default empty address object
+      userData.address = {
+        street: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        country: ''
+      };
+    }
 
     // Only add profilePicture if it's provided
     if (profilePicture) {
@@ -52,6 +73,23 @@ exports.register = asyncHandler(async (req, res) => {
     sendTokenResponse(user, 201, res);
   } catch(err){
     console.error('Error creating user:', err);
+    // Handle specific validation errors
+    if (err.name === 'ValidationError') {
+      const message = Object.values(err.errors).map(val => val.message).join(', ');
+      return res.status(400).json({
+        success: false,
+        message
+      });
+    }
+    
+    // Handle duplicate email error
+    if (err.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email already exists'
+      });
+    }
+    
     res.status(500).json({
       success : false,
       message : 'Server error: ' + err.message
