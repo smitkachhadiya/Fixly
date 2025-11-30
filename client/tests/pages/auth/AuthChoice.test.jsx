@@ -1,105 +1,144 @@
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import AuthChoice from "../../../src/pages/auth/AuthChoice.jsx";
 
+import TestRouter from "../../utils/testRouter.jsx";
+const mockNavigate = jest.fn();
 jest.mock("react-router-dom", () => ({
   ...jest.requireActual("react-router-dom"),
-  useNavigate: () => jest.fn(),
+  useNavigate: () => mockNavigate,
 }));
 
+jest.mock("framer-motion", () => {
+  const React = require("react");
+  return {
+    motion: new Proxy({}, {
+      get: (target, prop) => {
+        return ({ children, ...props }) => React.createElement(prop, props, children);
+      }
+    }),
+    AnimatePresence: ({ children }) => <>{children}</>,
+  };
+});
+
 describe("AuthChoice Page", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe("Rendering", () => {
-    test("renders auth choice page with title", () => {
+    test("renders auth choice page with title", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <AuthChoice />
-        </MemoryRouter>
+        </TestRouter>
       );
-      expect(screen.getByText(/Login|Sign in|Choose/i)).toBeInTheDocument();
+      });
+      expect(screen.getByText(/welcome!/i)).toBeInTheDocument();
     });
 
-    test("renders login button", () => {
+    test("renders login button", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <AuthChoice />
-        </MemoryRouter>
+        </TestRouter>
       );
-      const loginBtn = screen.getByRole("button", { name: /login|sign in/i });
+      });
+      const loginBtn = screen.getByRole("button", { name: /login/i });
       expect(loginBtn).toBeInTheDocument();
     });
 
-    test("renders signup button", () => {
+    test("renders signup button", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <AuthChoice />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       const signupBtn = screen.getByRole("button", {
-        name: /signup|sign up|register/i,
+        name: /sign up/i,
       });
       expect(signupBtn).toBeInTheDocument();
     });
 
-    test("renders both authentication option buttons", () => {
+    test("renders both authentication option buttons", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <AuthChoice />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       const buttons = screen.getAllByRole("button");
       expect(buttons.length).toBeGreaterThanOrEqual(2);
     });
   });
 
   describe("Navigation", () => {
-    test("login button is clickable", () => {
+    test("login button navigates to login page", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <AuthChoice />
-        </MemoryRouter>
+        </TestRouter>
       );
-      const loginBtn = screen.getByRole("button", { name: /login|sign in/i });
+      });
+      const loginBtn = screen.getByRole("button", { name: /login/i });
+      await act(async () => {
       fireEvent.click(loginBtn);
-      expect(loginBtn).toBeInTheDocument();
+      });
+      expect(mockNavigate).toHaveBeenCalledWith("/login");
     });
 
-    test("signup button is clickable", () => {
+    test("signup button navigates to signup page", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <AuthChoice />
-        </MemoryRouter>
+        </TestRouter>
       );
-      const signupBtn = screen.getByRole("button", {
-        name: /signup|sign up|register/i,
       });
+      const signupBtn = screen.getByRole("button", {
+        name: /sign up/i,
+      });
+      await act(async () => {
       fireEvent.click(signupBtn);
-      expect(signupBtn).toBeInTheDocument();
+      });
+      expect(mockNavigate).toHaveBeenCalledWith("/signup");
     });
   });
 
   describe("Layout and Accessibility", () => {
-    test("page is accessible with semantic structure", () => {
-      const { container } = render(
-        <MemoryRouter>
+    test("page is accessible with semantic structure", async () => {
+      let container;
+      await act(async () => {
+        const result = render(
+        <TestRouter>
           <AuthChoice />
-        </MemoryRouter>
+        </TestRouter>
       );
+        container = result.container;
+      });
       const mainContent =
         container.querySelector("main") ||
         container.querySelector('[role="main"]');
       expect(mainContent || container.firstChild).toBeInTheDocument();
     });
 
-    test("buttons have proper accessible labels", () => {
+    test("buttons have proper accessible labels", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <AuthChoice />
-        </MemoryRouter>
+        </TestRouter>
       );
-      const loginBtn = screen.getByRole("button", { name: /login|sign in/i });
+      });
+      const loginBtn = screen.getByRole("button", { name: /login/i });
       const signupBtn = screen.getByRole("button", {
-        name: /signup|sign up|register/i,
+        name: /sign up/i,
       });
       expect(loginBtn).toHaveAccessibleName();
       expect(signupBtn).toHaveAccessibleName();

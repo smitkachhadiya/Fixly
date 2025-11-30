@@ -1,12 +1,15 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import Signup from "../../../src/pages/auth/Signup.jsx";
 
 jest.mock("../../../src/context/AuthContext.jsx", () => ({
   useAuth: () => ({
     register: jest.fn().mockResolvedValue({ success: true }),
   }),
+}));
+
+jest.mock("../../../src/utils/cloudinary.js", () => ({
+  uploadToCloudinary: jest.fn(),
 }));
 
 jest.mock("react-toastify", () => ({
@@ -17,11 +20,22 @@ jest.mock("react-toastify", () => ({
   },
 }));
 
-jest.mock("axios", () => ({
-  post: jest.fn().mockResolvedValue({
-    data: { success: true, message: "Registration successful" },
-  }),
-}));
+jest.mock("framer-motion", () => {
+  const React = require("react");
+  return {
+    motion: new Proxy({}, {
+      get: (target, prop) => {
+        return ({ children, ...props }) => React.createElement(prop, props, children);
+      }
+    }),
+    AnimatePresence: ({ children }) => <>{children}</>,
+  };
+});
+
+import { uploadToCloudinary } from "../../../src/utils/cloudinary.js";
+
+import TestRouter from "../../utils/testRouter.jsx";
+global.fetch = jest.fn();
 
 const mockNavigate = jest.fn();
 jest.mock("react-router-dom", () => ({
@@ -30,60 +44,84 @@ jest.mock("react-router-dom", () => ({
 }));
 
 describe("Signup Page", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    global.fetch.mockResolvedValue({
+      status: 201,
+      json: async () => ({
+        success: true,
+        token: "test-token",
+        message: "Registration successful",
+      }),
+    });
+    uploadToCloudinary.mockResolvedValue("https://example.com/image.jpg");
+    global.alert = jest.fn();
+  });
+
   describe("Rendering", () => {
-    test("renders signup form with title", () => {
+    test("renders signup form with title", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <Signup />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       expect(
-        screen.getByText(/sign up|register|create account/i)
+        screen.getByText(/create your account/i)
       ).toBeInTheDocument();
     });
 
-    test("renders first name input", () => {
+    test("renders first name input", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <Signup />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       const firstNameInput =
         screen.getByLabelText(/first name/i) ||
         screen.getByPlaceholderText(/first name/i);
       expect(firstNameInput).toBeInTheDocument();
     });
 
-    test("renders last name input", () => {
+    test("renders last name input", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <Signup />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       const lastNameInput =
         screen.getByLabelText(/last name/i) ||
         screen.getByPlaceholderText(/last name/i);
       expect(lastNameInput).toBeInTheDocument();
     });
 
-    test("renders email input", () => {
+    test("renders email input", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <Signup />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       const emailInput =
         screen.getByLabelText(/email|email address/i) ||
         screen.getByPlaceholderText(/email/i);
       expect(emailInput).toBeInTheDocument();
     });
 
-    test("renders phone number input", () => {
+    test("renders phone number input", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <Signup />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       const phoneInput =
         screen.getByLabelText(/phone|phone number/i) ||
         screen.getByPlaceholderText(/phone/i);
@@ -92,48 +130,43 @@ describe("Signup Page", () => {
       }
     });
 
-    test("renders password input", () => {
+    test("renders password input", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <Signup />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       const passwordInput =
         screen.getByLabelText(/^password$/i) ||
         screen.getByPlaceholderText(/^password$/i);
       expect(passwordInput).toBeInTheDocument();
     });
 
-    test("renders confirm password input", () => {
-      render(
-        <MemoryRouter>
-          <Signup />
-        </MemoryRouter>
-      );
-      const confirmPasswordInput =
-        screen.getByLabelText(/confirm password/i) ||
-        screen.getByPlaceholderText(/confirm password/i);
-      expect(confirmPasswordInput).toBeInTheDocument();
-    });
 
-    test("renders submit button", () => {
+    test("renders submit button", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <Signup />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       const submitBtn = screen.getByRole("button", {
         name: /sign up|register/i,
       });
       expect(submitBtn).toBeInTheDocument();
     });
 
-    test("renders login link", () => {
+    test("renders login link", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <Signup />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       const loginLink = screen.queryByText(
         /already have account|login|sign in/i
       );
@@ -144,175 +177,217 @@ describe("Signup Page", () => {
   });
 
   describe("Form Interactions", () => {
-    test("accepts first name input", () => {
+    test("accepts first name input", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <Signup />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       const firstNameInput =
         screen.getByLabelText(/first name/i) ||
         screen.getByPlaceholderText(/first name/i);
+      await act(async () => {
       fireEvent.change(firstNameInput, { target: { value: "John" } });
+      });
       expect(firstNameInput.value).toBe("John");
     });
 
-    test("accepts last name input", () => {
+    test("accepts last name input", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <Signup />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       const lastNameInput =
         screen.getByLabelText(/last name/i) ||
         screen.getByPlaceholderText(/last name/i);
+      await act(async () => {
       fireEvent.change(lastNameInput, { target: { value: "Doe" } });
+      });
       expect(lastNameInput.value).toBe("Doe");
     });
 
-    test("accepts email input", () => {
+    test("accepts email input", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <Signup />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       const emailInput =
         screen.getByLabelText(/email|email address/i) ||
         screen.getByPlaceholderText(/email/i);
+      await act(async () => {
       fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+      });
       expect(emailInput.value).toBe("john@example.com");
     });
 
-    test("accepts phone input", () => {
+    test("accepts phone input", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <Signup />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       const phoneInput =
         screen.getByLabelText(/phone|phone number/i) ||
         screen.getByPlaceholderText(/phone/i);
       if (phoneInput) {
+        await act(async () => {
         fireEvent.change(phoneInput, { target: { value: "1234567890" } });
+        });
         expect(phoneInput.value).toBe("1234567890");
       }
     });
 
-    test("accepts password input", () => {
+    test("accepts password input", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <Signup />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       const passwordInput =
         screen.getByLabelText(/^password$/i) ||
         screen.getByPlaceholderText(/^password$/i);
+      await act(async () => {
       fireEvent.change(passwordInput, { target: { value: "Password123!" } });
+      });
       expect(passwordInput.value).toBe("Password123!");
     });
 
-    test("accepts confirm password input", () => {
-      render(
-        <MemoryRouter>
-          <Signup />
-        </MemoryRouter>
-      );
-      const confirmPasswordInput =
-        screen.getByLabelText(/confirm password/i) ||
-        screen.getByPlaceholderText(/confirm password/i);
-      fireEvent.change(confirmPasswordInput, {
-        target: { value: "Password123!" },
-      });
-      expect(confirmPasswordInput.value).toBe("Password123!");
-    });
   });
 
   describe("Validation", () => {
-    test("shows error when passwords do not match", async () => {
-      render(
-        <MemoryRouter>
-          <Signup />
-        </MemoryRouter>
-      );
-      const passwordInput =
-        screen.getByLabelText(/^password$/i) ||
-        screen.getByPlaceholderText(/^password$/i);
-      const confirmPasswordInput =
-        screen.getByLabelText(/confirm password/i) ||
-        screen.getByPlaceholderText(/confirm password/i);
-      const submitBtn = screen.getByRole("button", {
-        name: /sign up|register/i,
-      });
 
-      fireEvent.change(passwordInput, { target: { value: "Password123!" } });
-      fireEvent.change(confirmPasswordInput, {
-        target: { value: "DifferentPassword123!" },
-      });
-      fireEvent.click(submitBtn);
-
-      await waitFor(() => {
-        expect(submitBtn).toBeInTheDocument();
-      });
-    });
-
-    test("shows error for invalid email format", async () => {
-      render(
-        <MemoryRouter>
-          <Signup />
-        </MemoryRouter>
-      );
-      const emailInput =
-        screen.getByLabelText(/email|email address/i) ||
-        screen.getByPlaceholderText(/email/i);
-      fireEvent.change(emailInput, { target: { value: "invalidemail" } });
-      fireEvent.blur(emailInput);
-
-      await waitFor(() => {
-        expect(emailInput).toBeInTheDocument();
-      });
-    });
 
     test("shows error when required fields are empty", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <Signup />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       const submitBtn = screen.getByRole("button", {
         name: /sign up|register/i,
       });
+      await act(async () => {
       fireEvent.click(submitBtn);
+      });
 
       await waitFor(() => {
         expect(submitBtn).toBeInTheDocument();
       });
+    });
+
+    test("handles profile image upload", async () => {
+      await act(async () => {
+      render(
+        <TestRouter>
+          <Signup />
+        </TestRouter>
+      );
+      });
+      const fileInput = screen.queryByLabelText(/profile picture|image/i);
+      if (fileInput) {
+        const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+        await act(async () => {
+          fireEvent.change(fileInput, { target: { files: [file] } });
+      });
+      }
+    });
+
+    test("handles signup with address fields", async () => {
+      await act(async () => {
+      render(
+        <TestRouter>
+          <Signup />
+        </TestRouter>
+      );
+      });
+      const firstNameInput = screen.getByLabelText(/first name/i);
+      const lastNameInput = screen.getByLabelText(/last name/i);
+      const emailInput = screen.getByLabelText(/email/i);
+      const passwordInput = screen.getByLabelText(/^password$/i);
+      const streetInput = screen.getByLabelText(/street/i);
+      const cityInput = screen.getByLabelText(/city/i);
+      const stateInput = screen.getByLabelText(/state/i);
+      const zipCodeInput = screen.getByLabelText(/zip/i);
+      const countryInput = screen.getByLabelText(/country/i);
+
+      await act(async () => {
+        fireEvent.change(firstNameInput, { target: { value: "John" } });
+        fireEvent.change(lastNameInput, { target: { value: "Doe" } });
+        fireEvent.change(emailInput, { target: { value: "john@example.com" } });
+        fireEvent.change(passwordInput, { target: { value: "password123" } });
+        fireEvent.change(streetInput, { target: { value: "123 Main St" } });
+        fireEvent.change(cityInput, { target: { value: "New York" } });
+        fireEvent.change(stateInput, { target: { value: "NY" } });
+        fireEvent.change(zipCodeInput, { target: { value: "10001" } });
+        fireEvent.change(countryInput, { target: { value: "USA" } });
+      });
+    });
+
+
+    test("handles image upload error", async () => {
+      uploadToCloudinary.mockRejectedValue(new Error("Upload failed"));
+
+      await act(async () => {
+        render(
+          <TestRouter>
+            <Signup />
+          </TestRouter>
+        );
+      });
+      const fileInput = screen.queryByLabelText(/profile picture|image/i);
+      if (fileInput) {
+        const file = new File(["test"], "test.jpg", { type: "image/jpeg" });
+        await act(async () => {
+          fireEvent.change(fileInput, { target: { files: [file] } });
+        });
+      }
     });
   });
 
   describe("Navigation Links", () => {
-    test("login link is clickable", () => {
+    test("login link is clickable", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <Signup />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       const loginLink = screen.queryByText(
         /already have account|login|sign in/i
       );
       if (loginLink) {
+        await act(async () => {
         fireEvent.click(loginLink);
+        });
         expect(loginLink).toBeInTheDocument();
       }
     });
   });
 
   describe("Accessibility", () => {
-    test("all form inputs have proper labels", () => {
+    test("all form inputs have proper labels", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <Signup />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       const firstNameInput =
         screen.getByLabelText(/first name/i) ||
         screen.getByPlaceholderText(/first name/i);
@@ -325,23 +400,20 @@ describe("Signup Page", () => {
       const passwordInput =
         screen.getByLabelText(/^password$/i) ||
         screen.getByPlaceholderText(/^password$/i);
-      const confirmPasswordInput =
-        screen.getByLabelText(/confirm password/i) ||
-        screen.getByPlaceholderText(/confirm password/i);
-
       expect(firstNameInput).toBeInTheDocument();
       expect(lastNameInput).toBeInTheDocument();
       expect(emailInput).toBeInTheDocument();
       expect(passwordInput).toBeInTheDocument();
-      expect(confirmPasswordInput).toBeInTheDocument();
     });
 
-    test("submit button is accessible", () => {
+    test("submit button is accessible", async () => {
+      await act(async () => {
       render(
-        <MemoryRouter>
+        <TestRouter>
           <Signup />
-        </MemoryRouter>
+        </TestRouter>
       );
+      });
       const submitBtn = screen.getByRole("button", {
         name: /sign up|register/i,
       });

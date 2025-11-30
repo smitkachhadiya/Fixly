@@ -1,8 +1,8 @@
 import React from "react";
-import { render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import Complaints from "../../../src/pages/admin/Complaints.jsx";
 
+import TestRouter from "../../utils/testRouter.jsx";
 jest.mock("../../../src/context/AuthContext.jsx", () => ({
   useAuth: () => ({ token: "t" }),
 }));
@@ -22,73 +22,127 @@ jest.mock("axios", () => ({
   put: jest.fn().mockResolvedValue({ data: { success: true } }),
 }));
 
-test("Complaints loads and renders header", async () => {
-  render(
-    <MemoryRouter>
-      <Complaints />
-    </MemoryRouter>
-  );
-  expect(screen.getByText(/Customer Complaints/i)).toBeInTheDocument();
-  await waitFor(() => {
-    expect(screen.getByText(/rows:0/)).toBeInTheDocument();
+describe("Complaints Page", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
-});
 
-test("Complaints renders filter options", () => {
-  render(
-    <MemoryRouter>
-      <Complaints />
-    </MemoryRouter>
-  );
-  expect(
-    screen.getByText(/Customer Complaints|Filter|Search/i)
-  ).toBeInTheDocument();
-});
-
-test("Complaints shows loading state", async () => {
-  render(
-    <MemoryRouter>
-      <Complaints />
-    </MemoryRouter>
-  );
-  await waitFor(() => {
-    expect(screen.queryByText(/rows:|Loading/i)).toBeInTheDocument();
+  test("loads and renders header", async () => {
+    await act(async () => {
+    render(
+      <TestRouter>
+        <Complaints />
+      </TestRouter>
+    );
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/Customer Complaints/i)).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/rows:0/)).toBeInTheDocument();
+    }, { timeout: 3000 });
   });
-});
 
-test("Complaints modal opens for complaint details", async () => {
-  render(
-    <MemoryRouter>
-      <Complaints />
-    </MemoryRouter>
-  );
-  await waitFor(() => {
-    expect(screen.getByText(/Customer Complaints/i)).toBeInTheDocument();
+  test("renders filter options", async () => {
+    await act(async () => {
+    render(
+      <TestRouter>
+        <Complaints />
+      </TestRouter>
+    );
+    });
+    await waitFor(() => {
+    expect(
+      screen.getByText(/Customer Complaints|Filter|Search/i)
+    ).toBeInTheDocument();
+    });
   });
-});
 
-test("Complaints displays complaint status correctly", async () => {
-  render(
-    <MemoryRouter>
-      <Complaints />
-    </MemoryRouter>
-  );
-  await waitFor(() => {
-    expect(screen.getByText(/rows:0/)).toBeInTheDocument();
+  test("shows loading state", async () => {
+    await act(async () => {
+    render(
+      <TestRouter>
+        <Complaints />
+      </TestRouter>
+    );
+    });
+    await waitFor(() => {
+      expect(screen.queryByText(/rows:|Loading/i)).toBeInTheDocument();
+    });
   });
-});
 
-test("Complaints table has accessible structure", async () => {
-  const { container } = render(
-    <MemoryRouter>
-      <Complaints />
-    </MemoryRouter>
-  );
-  const table = container.querySelector("table");
-  if (table) {
-    expect(table).toBeInTheDocument();
-  }
-  await waitFor(() => {
-    expect(screen.getByText(/rows:0/)).toBeInTheDocument();
+  test("modal opens for complaint details", async () => {
+    await act(async () => {
+    render(
+      <TestRouter>
+        <Complaints />
+      </TestRouter>
+    );
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/Customer Complaints/i)).toBeInTheDocument();
+    });
   });
+
+  test("displays complaint status correctly", async () => {
+    await act(async () => {
+    render(
+      <TestRouter>
+        <Complaints />
+      </TestRouter>
+    );
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/rows:0/)).toBeInTheDocument();
+    }, { timeout: 3000 });
+  });
+
+  test("table has accessible structure", async () => {
+    let container;
+    await act(async () => {
+      const result = render(
+      <TestRouter>
+        <Complaints />
+      </TestRouter>
+    );
+      container = result.container;
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/rows:0/)).toBeInTheDocument();
+    }, { timeout: 3000 });
+    const table = container.querySelector("table");
+    if (table) {
+      expect(table).toBeInTheDocument();
+    }
+  });
+
+  test("handles status filter change", async () => {
+    await act(async () => {
+      render(
+        <TestRouter>
+          <Complaints />
+        </TestRouter>
+      );
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/rows:0/)).toBeInTheDocument();
+    }, { timeout: 3000 });
+  });
+
+  test("handles error state", async () => {
+    const axios = require("axios");
+    axios.get.mockRejectedValue(new Error("Network error"));
+
+    await act(async () => {
+      render(
+        <TestRouter>
+          <Complaints />
+        </TestRouter>
+      );
+    });
+    await waitFor(() => {
+      expect(axios.get).toHaveBeenCalled();
+    });
+  });
+
 });

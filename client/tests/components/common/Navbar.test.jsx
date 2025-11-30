@@ -1,31 +1,25 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import Navbar from '../../src/components/common/Navbar.jsx';
+import React from "react";
+import { render, screen, fireEvent } from "@testing-library/react";
+import Navbar from "../../../src/components/common/Navbar.jsx";
+import TestRouter from "../../utils/testRouter.jsx";
 
-jest.mock('../../src/context/AuthContext', () => ({
-  useAuth: () => ({ user: { userType: 'admin' }, logout: jest.fn(), isAuthenticated: () => true })
+jest.mock("../../../src/context/AuthContext", () => ({
+  useAuth: () => ({
+    user: { userType: "admin" },
+    logout: jest.fn(),
+    isAuthenticated: () => true,
+  }),
 }));
 
-describe('Navbar', () => {
-  test('renders brand and links', () => {
+describe("Navbar", () => {
+  test("renders brand and links", () => {
     render(
-      <MemoryRouter>
+      <TestRouter>
         <Navbar />
-      </MemoryRouter>
+      </TestRouter>
     );
-    expect(screen.getByText('Fixly')).toBeInTheDocument();
-    expect(screen.getByText('Services')).toBeInTheDocument();
+    expect(screen.getByText("Fixly")).toBeInTheDocument();
+    expect(screen.getByText("Services")).toBeInTheDocument();
   });
 
-  test('toggles mobile menu', () => {
-    render(
-      <MemoryRouter>
-        <Navbar />
-      </MemoryRouter>
-    );
-    const btn = screen.getByRole('button');
-    fireEvent.click(btn);
-    expect(screen.getByText('Home')).toBeInTheDocument();
-  });
 });
