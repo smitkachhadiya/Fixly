@@ -297,9 +297,10 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
 
   if (!user) {
     console.log('No user found with email:', req.body.email);
-    return res.status(404).json({
-      success: false,
-      message: 'There is no user with that email'
+    // For security reasons, we still return success even if user doesn't exist
+    return res.status(200).json({
+      success: true,
+      data: 'If your email is registered with us, you will receive a password reset link shortly.'
     });
   }
 
@@ -325,7 +326,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
     console.error('Error saving user with reset token:', err);
     return res.status(500).json({
       success: false,
-      message: 'Could not save reset token'
+      message: 'Could not save reset token. Please try again later.'
     });
   }
 
@@ -395,7 +396,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
       html: htmlMessage
     });
 
-    res.status(200).json({ success: true, data: 'Email sent' });
+    res.status(200).json({ success: true, data: 'Email sent successfully' });
   } catch (err) {
     console.log('Email sending error:', err);
     user.resetPasswordToken = undefined;
@@ -403,11 +404,11 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
 
     await user.save({ validateBeforeSave: false });
 
-    // Even if email fails, we still return success to avoid revealing if the email exists
-    // This is a security best practice
-    res.status(200).json({ 
-      success: true, 
-      data: 'If your email is registered with us, you will receive a password reset link shortly.' 
+    // Return error response with more details
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to send email. Please check your network connection and try again.',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 });

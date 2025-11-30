@@ -17,20 +17,20 @@ console.log('Cloudinary configuration:', {
 });
 
 // Set up storage for different types of uploads
-const createStorage = (folder) => {
+const createStorage = (folder, transformation = [{ width: 800, height: 600, crop: 'fill', gravity: 'auto' }]) => {
   return new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
       folder: `fixly/${folder}`,
       allowed_formats: ['jpg', 'jpeg', 'png'],
-      transformation: [{ width: 500, height: 500, crop: 'limit' }]
+      transformation: transformation
     }
   });
 };
 
 // Create upload middleware for different types
 const categoryImageUpload = multer({
-  storage: createStorage('categories'),
+  storage: createStorage('categories', [{ width: 400, height: 400, crop: 'fill', gravity: 'auto' }]), // Square images for categories
   limits: { fileSize: 2 * 1024 * 1024 } // 2MB limit
 });
 

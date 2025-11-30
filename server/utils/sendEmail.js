@@ -15,14 +15,21 @@ const sendEmail = async (options) => {
     throw new Error('Email service not properly configured. Missing SMTP credentials.');
   }
 
-  // Create a transporter
+  // Create a transporter with timeout configuration
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
     auth: {
       user: process.env.SMTP_EMAIL,
       pass: process.env.SMTP_PASSWORD
-    }
+    },
+    // Add timeout configuration
+    tls: {
+      rejectUnauthorized: false
+    },
+    connectionTimeout: 30000, // 30 seconds
+    greetingTimeout: 30000,   // 30 seconds
+    socketTimeout: 30000      // 30 seconds
   });
 
   // Define email options
@@ -40,11 +47,17 @@ const sendEmail = async (options) => {
 
   // Send email
   try {
+    console.log('Sending email to:', options.email);
+    console.log('SMTP Host:', process.env.SMTP_HOST);
+    console.log('SMTP Port:', process.env.SMTP_PORT);
+    
     const result = await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully to:', options.email);
     return result;
   } catch (error) {
     console.error('Email sending failed:', error);
-    throw new Error(`Failed to send email: ${error.message}`);
+    // Provide more detailed error information
+    throw new Error(`Failed to send email: ${error.message}. Please check your SMTP configuration and network connection.`);
   }
 };
 
