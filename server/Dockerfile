@@ -14,12 +14,16 @@ RUN npm ci --only=production
 COPY . .
 
 # Expose the port the app runs on
-EXPOSE 5000
+EXPOSE 10000
 
 # Create a non-root user and switch to it
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nextjs -u 1001
 USER nextjs
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:10000/health', (res) => {if(res.statusCode !== 200) process.exit(1)}) || process.exit(1)"
 
 # Command to run the application
 CMD ["node", "server.js"]
