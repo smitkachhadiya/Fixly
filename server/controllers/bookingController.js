@@ -110,11 +110,15 @@ exports.getProviderBookings = asyncHandler(async (req, res) => {
   const bookings = await Booking.find({ serviceProviderId: serviceProvider._id })
     .populate({
       path: 'serviceListingId',
-      select: 'serviceTitle servicePrice serviceImage'
+      select: 'serviceTitle servicePrice serviceImage categoryId',
+      populate: {
+        path: 'categoryId',
+        select: 'categoryName'
+      }
     })
     .populate({
       path: 'customerId',
-      select: 'firstName lastName profilePicture'
+      select: 'firstName lastName profilePicture phone address'
     })
     .sort({ bookingDateTime: -1 });
   

@@ -1,5 +1,6 @@
 const ServiceProvider = require('../models/ServiceProvider');
 const ServiceListing = require('../models/ServiceListing');
+const Booking = require('../models/Booking');
 const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const { cloudinary } = require('../config/cloudinary');
@@ -351,6 +352,14 @@ exports.getProviderListings = asyncHandler(async (req, res) => {
   })
     .populate('categoryId', 'categoryName')
     .sort({ createdAt: -1 });
+
+  // Add booking count to each listing
+  for (let i = 0; i < listings.length; i++) {
+    const bookingCount = await Booking.countDocuments({
+      serviceListingId: listings[i]._id
+    });
+    listings[i].bookingCount = bookingCount;
+  }
 
   res.status(200).json({
     success: true,
