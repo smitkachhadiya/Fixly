@@ -12,7 +12,7 @@ const PaymentSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['Credit Card', 'Debit Card', 'UPI', 'Bank Transfer', 'Cash'],
+    enum: ['Credit Card', 'Debit Card', 'UPI', 'Bank Transfer', 'Cash', 'Razorpay'],
     required: true
   },
   paymentDateTime: {

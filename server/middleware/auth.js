@@ -74,5 +74,3 @@ exports.authorize = (...roles) => {
     next();
   };
 };
-
-// ... existing code ...

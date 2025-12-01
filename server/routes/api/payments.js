@@ -1,5 +1,7 @@
 const express = require('express');
 const {
+  createPaymentOrder,
+  verifyPayment,
   createPayment,
   getPaymentById,
   getCustomerPayments,
@@ -16,8 +18,10 @@ const router = express.Router();
 // None
 
 // Protected routes
-router.post('/', protect, authorize('customer'), createPayment);
-router.get('/customer', protect, authorize('customer'), getCustomerPayments);
+router.post('/order', protect, authorize('user'), createPaymentOrder);
+router.post('/verify', protect, authorize('user'), verifyPayment);
+router.post('/', protect, authorize('user'), createPayment);
+router.get('/customer', protect, authorize('user'), getCustomerPayments);
 router.get('/provider', protect, authorize('service_provider'), getProviderPayments);
 router.get('/admin', protect, authorize('admin'), getAllPayments);
 router.get('/:id', protect, getPaymentById);
