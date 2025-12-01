@@ -9,6 +9,14 @@ const razorpay = require('../config/razorpay');
 // @route   POST /api/payments/order
 // @access  Private (Customer only)
 exports.createPaymentOrder = asyncHandler(async (req, res) => {
+  // Check if Razorpay is configured
+  if (!razorpay) {
+    return res.status(500).json({
+      success: false,
+      message: 'Payment processing is currently unavailable. Please contact support.'
+    });
+  }
+  
   const { bookingId } = req.body;
   
   // Validate required fields
@@ -81,6 +89,14 @@ exports.createPaymentOrder = asyncHandler(async (req, res) => {
 // @route   POST /api/payments/verify
 // @access  Private (Customer only)
 exports.verifyPayment = asyncHandler(async (req, res) => {
+  // Check if Razorpay is configured
+  if (!razorpay) {
+    return res.status(500).json({
+      success: false,
+      message: 'Payment processing is currently unavailable. Please contact support.'
+    });
+  }
+  
   const { 
     razorpay_order_id, 
     razorpay_payment_id, 
